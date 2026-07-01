@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -6,22 +7,33 @@ public class UnitSelectionManager : MonoBehaviour
 {
     public GridInputHandler gridInputHandler;
     public GameObject rangeHighlightPrefab;
+    public GameObject pathHighlightPrefab;    
     public Vector3 highlightRotarionEuler = new Vector3(90f, 0f, 0f);
 
     private Unit selectedUnit;
-    private List<GameObject> activeHighlights = new List<GameObject>();
+    private List<GameObject> activeRangeHighlights = new List<GameObject>();
+    private List<GameObject> activePathHighLights = new List<GameObject>();
+
     private List<Vector2Int> currentRangeCells = new List<Vector2Int>();
+    private Dictionary<Vector2Int, Vector2Int> currentCameFrom = new Dictionary<Vector2Int, Vector2Int>();
 
     private void OnEnable()
     {
         if (gridInputHandler != null)
+        {
             gridInputHandler.OnCellClicked.AddListener(HandleCellClicked);
+            gridInputHandler.OnCellHovered.AddListener(HandleCellHovered);
+        }
+
     }
 
     private void OnDisable()
     {
         if (gridInputHandler != null)
+        {
             gridInputHandler.OnCellClicked.RemoveListener(HandleCellClicked);
+            gridInputHandler.OnCellHovered.RemoveListener(HandleCellHovered);
+        }
     }
 
     private void HandleCellClicked(Vector2Int gridPos)
@@ -62,6 +74,16 @@ public class UnitSelectionManager : MonoBehaviour
         Deselect();
     }
 
+    private void HandleCellHovered(Vector2Int gridPos)
+    {
+        ClearPathHighlights();
+
+        if (selectedUnit == null) return;
+        if (!currentRangeCells.Contains(gridPos)) return;
+
+        List<Vector2Int> path = Pathfinding.ReconstructPath(selectedUnit.GridPosition, gridPos, currentCameFrom);
+        ShowPath(path);
+    }
     private void SelectUnit(Unit unit)
     {
         selectedUnit = unit;
@@ -71,53 +93,53 @@ public class UnitSelectionManager : MonoBehaviour
     private void Deselect()
     {
         selectedUnit = null;
-        ClearHighlights();
+        ClearRangeHighlights();
+        ClearPathHighlights();
+        currentCameFrom.Clear();
     }
 
     private void ShowRange(Vector2Int origin, int range)
     {
-        ClearHighlights();
-        currentRangeCells = GetReachableCells(origin, range);
+        ClearRangeHighlights();
+        ClearPathHighlights();
+
+        Dictionary<Vector2Int, int> reachable = Pathfinding.GetReachableCells(origin, range, out currentCameFrom);
+        currentRangeCells = new List<Vector2Int>(reachable.Keys) ;
 
         foreach(Vector2Int pos in currentRangeCells)
         {
             Vector3 worldPos = GridManager.Instance.GridToWorld(pos) + Vector3.up * 0.01f;
             GameObject highlight = Instantiate(rangeHighlightPrefab, worldPos, Quaternion.Euler(highlightRotarionEuler));
-            activeHighlights.Add(highlight);
+            activeRangeHighlights.Add(highlight);
         }
     }
 
-    private void ClearHighlights()
+    private void ShowPath(List<Vector2Int> path)
     {
-        foreach (GameObject highlight in activeHighlights)
+        foreach (Vector2Int pos in path)
+        {
+            Vector3 worldPos = GridManager.Instance.GridToWorld(pos) + Vector3.up * 0.02f;
+            GameObject highlight = Instantiate(pathHighlightPrefab, worldPos, Quaternion.Euler(highlightRotarionEuler));
+            activePathHighLights.Add(highlight);
+        }
+    }
+
+    private void ClearRangeHighlights()
+    {
+        foreach (GameObject highlight in activeRangeHighlights)
         {
             Destroy(highlight);
         }
-        activeHighlights.Clear();
+        activeRangeHighlights.Clear();
         currentRangeCells.Clear();
     }
 
-    private List<Vector2Int> GetReachableCells(Vector2Int origin, int range)
+    private void ClearPathHighlights()
     {
-        List<Vector2Int> result = new List<Vector2Int>();
-
-        for (int dx = -range; dx <= range; dx++)
+        foreach (GameObject highlight in activePathHighLights)
         {
-            int remaining = range - Mathf.Abs(dx);
-            for (int dy = -remaining; dy <= remaining; dy++)
-            {
-                if (dx == 0 && dy == 0) continue;
-
-                Vector2Int pos = origin + new Vector2Int(dx, dy);
-                if (!GridManager.Instance.IsValidGridPosition(pos)) continue;
-
-                GridCell cell = GridManager.Instance.GetCell(pos);
-                if (cell.isOccupied) continue;
-
-                result.Add(pos);
-            }
+            Destroy(highlight);
         }
-
-        return result;
+        activePathHighLights.Clear();
     }
 }
