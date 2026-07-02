@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using UnityEngine;
 
 public class TurnManager : MonoBehaviour
 {
     public static TurnManager Instance { get; private set; }
+
+    public event Action<Unit> TurnStarted;
 
     private List<Unit> turnOrder = new List<Unit>();
     private int currentIndex = -1;
@@ -48,8 +51,8 @@ public class TurnManager : MonoBehaviour
 
         CurrentUnit.StartTurn();
         Debug.Log($"Turno de ${CurrentUnit.name} (iniciativa {CurrentUnit.initiative})");
+        TurnStarted?.Invoke(CurrentUnit);
 
-        
         if (CurrentUnit is Enemy enemy)
         {
             enemy.TakeAITurn();
@@ -59,11 +62,9 @@ public class TurnManager : MonoBehaviour
 
     public void EndTurnButtonPressed()
     {
-        
         if (CurrentUnit != null && !(CurrentUnit is Enemy))
         {
             NextTurn();
         }
-        
     }
 }
