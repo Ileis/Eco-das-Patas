@@ -1,10 +1,16 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class UnitSelectionManager : MonoBehaviour
 {
+    private enum SelectionMode
+    {
+        None,
+        Move,
+        AbilityTarget
+    }
+
     public GridInputHandler gridInputHandler;
     public GameObject rangeHighlightPrefab;
     public GameObject pathHighlightPrefab;
@@ -12,11 +18,13 @@ public class UnitSelectionManager : MonoBehaviour
     public Vector3 highlightRotarionEuler = new Vector3(90f, 0f, 0f);
 
     private Unit selectedUnit;
+    private Ability selectedAbility;
+    private SelectionMode currentMode = SelectionMode.None;
 
     private List<GameObject> activeRangeHighlights = new List<GameObject>();
-    private List<GameObject> activePathHighLights = new List<GameObject>();
+    private List<GameObject> activePathHighlights = new List<GameObject>();
 
-    private List<Vector2Int> currentRangeCells = new List<Vector2Int>();
+    private readonly List<Vector2Int> currentHighlightCells = new List<Vector2Int>();
     private Dictionary<Vector2Int, Vector2Int> currentCameFrom = new Dictionary<Vector2Int, Vector2Int>();
 
     private void OnEnable()
@@ -27,6 +35,18 @@ public class UnitSelectionManager : MonoBehaviour
             gridInputHandler.OnCellHovered.AddListener(HandleCellHovered);
         }
 
+        if (TurnManager.Instance != null)
+        {
+            TurnManager.Instance.TurnStarted += HandleTurnStarted;
+        }
+    }
+
+    private void Start()
+    {
+        if (TurnManager.Instance != null)
+        {
+            HandleTurnStarted(TurnManager.Instance.CurrentUnit);
+        }
     }
 
     private void OnDisable()
@@ -36,11 +56,15 @@ public class UnitSelectionManager : MonoBehaviour
             gridInputHandler.OnCellClicked.RemoveListener(HandleCellClicked);
             gridInputHandler.OnCellHovered.RemoveListener(HandleCellHovered);
         }
+
+        if (TurnManager.Instance != null)
+        {
+            TurnManager.Instance.TurnStarted -= HandleTurnStarted;
+        }
     }
 
     private void HandleCellClicked(Vector2Int gridPos)
     {
-        
         GridCell clickedCell = GridManager.Instance.GetCell(gridPos);
         if (clickedCell == null) return;
 
@@ -48,42 +72,67 @@ public class UnitSelectionManager : MonoBehaviour
         {
             if (clickedCell.occupant is Unit unit)
             {
-                if (TurnManager.Instance != null && unit != TurnManager.Instance.CurrentUnit)
-                {
-                    return;
-                }
-
-                if (unit is Enemy)
-                {
-                    return;
-                }
-
-                SelectUnit(unit);
+                TrySelectCurrentUnit(unit);
             }
+            return;
+        }
+
+        if (currentMode == SelectionMode.AbilityTarget)
+        {
+            if (currentHighlightCells.Contains(gridPos) && clickedCell.occupant is Unit targetUnit)
+            {
+                if (selectedUnit.TryUseAbility(selectedAbility, targetUnit))
+                {
+                    if (selectedUnit != null && !selectedUnit.IsDead && CanContinueActing())
+                    {
+                        BeginAbilityMode(selectedUnit, selectedAbility);
+                    }
+                    else
+                    {
+                        ClearSelection();
+                    }
+                }
+                return;
+            }
+
+            if (clickedCell.occupant is Unit abilityUnit && TrySelectCurrentUnit(abilityUnit))
+            {
+                return;
+            }
+
+            return;
+        }
+
+        if (currentMode == SelectionMode.Move)
+        {
+            if (currentHighlightCells.Contains(gridPos) && !clickedCell.isOccupied)
+            {
+                selectedUnit.MoveTo(gridPos);
+                ClearSelection();
+                return;
+            }
+
+            if (clickedCell.occupant is Unit moveUnit && TrySelectCurrentUnit(moveUnit))
+            {
+                return;
+            }
+
             return;
         }
 
         if (gridPos == selectedUnit.GridPosition)
         {
-            Deselect();
-            return;
-        }
-
-        if (currentRangeCells.Contains(gridPos) && !clickedCell.isOccupied)
-        {
-            selectedUnit.MoveTo(gridPos);
-            Deselect();
+            ClearSelection();
             return;
         }
 
         if (clickedCell.occupant is Unit otherUnit)
         {
-            Deselect();
-            SelectUnit(otherUnit);
+            TrySelectCurrentUnit(otherUnit);
             return;
         }
 
-        Deselect();
+        ClearSelection();
     }
 
     private void HandleCellHovered(Vector2Int gridPos)
@@ -91,45 +140,128 @@ public class UnitSelectionManager : MonoBehaviour
         ClearPathHighlights();
 
         if (selectedUnit == null) return;
-        if (!currentRangeCells.Contains(gridPos)) return;
+        if (currentMode != SelectionMode.Move) return;
+        if (!currentHighlightCells.Contains(gridPos)) return;
 
         List<Vector2Int> path = Pathfinding.ReconstructPath(selectedUnit.GridPosition, gridPos, currentCameFrom);
         ShowPath(path);
     }
-    private void SelectUnit(Unit unit)
+
+    public bool TrySelectCurrentUnit(Unit unit)
     {
+        if (unit == null || unit.IsDead) return false;
+        if (TurnManager.Instance != null && unit != TurnManager.Instance.CurrentUnit) return false;
+        if (unit is Enemy) return false;
+
         selectedUnit = unit;
-        ShowRange(unit.GridPosition, unit.moveRange);
+        selectedAbility = null;
+        currentMode = SelectionMode.Move;
+        RefreshHighlights();
+        return true;
     }
 
-    private void Deselect()
+    public bool BeginMoveMode(Unit unit)
+    {
+        if (!TrySelectCurrentUnit(unit)) return false;
+        if (selectedUnit != null && selectedUnit.HasMovedThisTurn) return false;
+        currentMode = SelectionMode.Move;
+        selectedAbility = null;
+        RefreshHighlights();
+        return true;
+    }
+
+    public bool BeginAbilityMode(Unit unit, Ability ability)
+    {
+        if (unit == null || ability == null || unit.IsDead) return false;
+        if (TurnManager.Instance != null && unit != TurnManager.Instance.CurrentUnit) return false;
+        if (unit is Enemy) return false;
+
+        selectedUnit = unit;
+        selectedAbility = ability;
+        currentMode = SelectionMode.AbilityTarget;
+        RefreshHighlights();
+        return true;
+    }
+
+    public void ClearSelection()
     {
         selectedUnit = null;
+        selectedAbility = null;
+        currentMode = SelectionMode.None;
         ClearRangeHighlights();
         ClearPathHighlights();
         currentCameFrom.Clear();
     }
 
-    private void ShowRange(Vector2Int origin, int range)
+    private void HandleTurnStarted(Unit currentUnit)
     {
-        ClearRangeHighlights();
-        ClearPathHighlights();
+        if (selectedUnit == null) return;
 
-        if (selectedUnit != null && selectedUnit.HasMovedThisTurn)
+        if (currentUnit == null || selectedUnit != currentUnit)
         {
-            currentRangeCells.Clear();
-            currentCameFrom.Clear();
+            ClearSelection();
             return;
         }
 
-        Dictionary<Vector2Int, int> reachable = Pathfinding.GetReachableCells(origin, range, out currentCameFrom);
-        currentRangeCells = new List<Vector2Int>(reachable.Keys) ;
+        RefreshHighlights();
+    }
 
-        foreach(Vector2Int pos in currentRangeCells)
+    private void RefreshHighlights()
+    {
+        ClearRangeHighlights();
+        ClearPathHighlights();
+        currentCameFrom.Clear();
+
+        if (selectedUnit == null || selectedUnit.IsDead) return;
+
+        switch (currentMode)
+        {
+            case SelectionMode.AbilityTarget:
+                ShowAbilityRange(selectedUnit.GridPosition, selectedAbility != null ? selectedAbility.range : 0);
+                break;
+            case SelectionMode.Move:
+                if (selectedUnit.HasMovedThisTurn)
+                {
+                    return;
+                }
+                ShowMoveRange(selectedUnit.GridPosition, selectedUnit.moveRange);
+                break;
+        }
+    }
+
+    private void ShowMoveRange(Vector2Int origin, int range)
+    {
+        Dictionary<Vector2Int, int> reachable = Pathfinding.GetReachableCells(origin, range, out currentCameFrom);
+        currentHighlightCells.Clear();
+        currentHighlightCells.AddRange(reachable.Keys);
+
+        foreach (Vector2Int pos in currentHighlightCells)
         {
             Vector3 worldPos = GridManager.Instance.GridToWorld(pos) + Vector3.up * 0.01f;
             GameObject highlight = Instantiate(rangeHighlightPrefab, worldPos, Quaternion.Euler(highlightRotarionEuler));
             activeRangeHighlights.Add(highlight);
+        }
+    }
+
+    private void ShowAbilityRange(Vector2Int origin, int range)
+    {
+        currentHighlightCells.Clear();
+
+        if (GridManager.Instance == null) return;
+
+        for (int x = 0; x < GridManager.Instance.width; x++)
+        {
+            for (int y = 0; y < GridManager.Instance.height; y++)
+            {
+                Vector2Int pos = new Vector2Int(x, y);
+                int distance = Mathf.Abs(pos.x - origin.x) + Mathf.Abs(pos.y - origin.y);
+                if (distance > range) continue;
+
+                currentHighlightCells.Add(pos);
+                Vector3 worldPos = GridManager.Instance.GridToWorld(pos) + Vector3.up * 0.01f;
+                GameObject highlight = Instantiate(rangeHighlightPrefab, worldPos, Quaternion.Euler(highlightRotarionEuler));
+                activeRangeHighlights.Add(highlight);
+            }
         }
     }
 
@@ -139,7 +271,7 @@ public class UnitSelectionManager : MonoBehaviour
         {
             Vector3 worldPos = GridManager.Instance.GridToWorld(pos) + Vector3.up * 0.02f;
             GameObject highlight = Instantiate(pathHighlightPrefab, worldPos, Quaternion.Euler(highlightRotarionEuler));
-            activePathHighLights.Add(highlight);
+            activePathHighlights.Add(highlight);
         }
     }
 
@@ -150,15 +282,23 @@ public class UnitSelectionManager : MonoBehaviour
             Destroy(highlight);
         }
         activeRangeHighlights.Clear();
-        currentRangeCells.Clear();
+        currentHighlightCells.Clear();
     }
 
     private void ClearPathHighlights()
     {
-        foreach (GameObject highlight in activePathHighLights)
+        foreach (GameObject highlight in activePathHighlights)
         {
             Destroy(highlight);
         }
-        activePathHighLights.Clear();
+        activePathHighlights.Clear();
+    }
+
+    private bool CanContinueActing()
+    {
+        if (selectedUnit == null) return false;
+        if (selectedUnit.IsDead) return false;
+        if (selectedAbility == null) return false;
+        return selectedUnit.CanUseAbility(selectedAbility);
     }
 }
