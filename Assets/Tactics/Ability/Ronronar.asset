@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 456b5744fd04f61aa80b6e5889aa2105, type: 3}
   m_Name: Ronronar
   m_EditorClassIdentifier: Assembly-CSharp::Ability
-  abilityName: Nova Habilidade
-  type: 0
+  abilityName: Ronronar
+  type: 3
   actionPoinCost: 1
   maxUsesPerTurn: 2
-  range: 1
-  power: 2
+  range: 0
+  power: 1
   buffDurationTurns: 2

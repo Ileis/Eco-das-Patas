@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 456b5744fd04f61aa80b6e5889aa2105, type: 3}
   m_Name: Patada
   m_EditorClassIdentifier: Assembly-CSharp::Ability
-  abilityName: Nova Habilidade
+  abilityName: Patada
   type: 0
   actionPoinCost: 1
-  maxUsesPerTurn: 2
+  maxUsesPerTurn: 3
   range: 1
   power: 2
   buffDurationTurns: 2
