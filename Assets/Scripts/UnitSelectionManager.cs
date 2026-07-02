@@ -7,10 +7,12 @@ public class UnitSelectionManager : MonoBehaviour
 {
     public GridInputHandler gridInputHandler;
     public GameObject rangeHighlightPrefab;
-    public GameObject pathHighlightPrefab;    
+    public GameObject pathHighlightPrefab;
+
     public Vector3 highlightRotarionEuler = new Vector3(90f, 0f, 0f);
 
     private Unit selectedUnit;
+
     private List<GameObject> activeRangeHighlights = new List<GameObject>();
     private List<GameObject> activePathHighLights = new List<GameObject>();
 
@@ -46,6 +48,16 @@ public class UnitSelectionManager : MonoBehaviour
         {
             if (clickedCell.occupant is Unit unit)
             {
+                if (TurnManager.Instance != null && unit != TurnManager.Instance.CurrentUnit)
+                {
+                    return;
+                }
+
+                if (unit is Enemy)
+                {
+                    return;
+                }
+
                 SelectUnit(unit);
             }
             return;
@@ -102,6 +114,13 @@ public class UnitSelectionManager : MonoBehaviour
     {
         ClearRangeHighlights();
         ClearPathHighlights();
+
+        if (selectedUnit != null && selectedUnit.HasMovedThisTurn)
+        {
+            currentRangeCells.Clear();
+            currentCameFrom.Clear();
+            return;
+        }
 
         Dictionary<Vector2Int, int> reachable = Pathfinding.GetReachableCells(origin, range, out currentCameFrom);
         currentRangeCells = new List<Vector2Int>(reachable.Keys) ;
