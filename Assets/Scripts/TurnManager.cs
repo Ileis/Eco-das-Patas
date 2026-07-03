@@ -99,7 +99,7 @@ public class TurnManager : MonoBehaviour
 
         _turnCount++;
         CurrentUnit.StartTurn();
-        Debug.Log($"Turno de ${CurrentUnit.name} (iniciativa {CurrentUnit.initiative})");
+        Debug.Log($"Turno de {CurrentUnit.name} (iniciativa {CurrentUnit.initiative})");
         AttachTurnIndicator(CurrentUnit);
         UpdateTurnHud();
         TurnStarted?.Invoke(CurrentUnit);
