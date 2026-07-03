@@ -51,12 +51,13 @@ public static class KenneyAssetIntegrator
             PrefabRoot + "/Lapide.prefab",
             0.48f * CellScale,
             0.75f * CellScale);
+        RuntimeAnimatorController zombieController = CreateZombieController();
         GameObject zombiePrefab = CreateVisualPrefab(
             GraveyardModels + "character-zombie.fbx",
             PrefabRoot + "/Zumbi_Visual.prefab",
             0.48f * CellScale,
             1.05f * CellScale,
-            null,
+            zombieController,
             -0.04f * CellScale);
         RuntimeAnimatorController catController = CreateCatIdleController();
         GameObject catPrefab = CreateVisualPrefab(
@@ -266,18 +267,132 @@ public static class KenneyAssetIntegrator
             controller = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
         }
 
-        AnimationClip idleClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Idle.fbx")
-            .OfType<AnimationClip>()
-            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
         AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
         foreach (ChildAnimatorState childState in stateMachine.states)
         {
             stateMachine.RemoveState(childState.state);
         }
 
+        AnimationClip idleClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Idle.fbx")
+            .OfType<AnimationClip>()
+            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
         AnimatorState idleState = stateMachine.AddState("Idle");
         idleState.motion = idleClip;
         stateMachine.defaultState = idleState;
+
+        AnimationClip walkClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Walk.fbx")
+            .OfType<AnimationClip>()
+            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
+        if (walkClip != null)
+        {
+            AnimatorState walkState = stateMachine.AddState("Walk");
+            walkState.motion = walkClip;
+        }
+
+        AnimationClip jumpClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Jump.fbx")
+            .OfType<AnimationClip>()
+            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
+        if (jumpClip != null)
+        {
+            AnimatorState jumpState = stateMachine.AddState("Jump");
+            jumpState.motion = jumpClip;
+        }
+
+        AnimationClip eatClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Eat.fbx")
+            .OfType<AnimationClip>()
+            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
+        if (eatClip != null)
+        {
+            AnimatorState eatState = stateMachine.AddState("Eat");
+            eatState.motion = eatClip;
+        }
+
+        AnimationClip soundClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Sound.fbx")
+            .OfType<AnimationClip>()
+            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
+        if (soundClip != null)
+        {
+            AnimatorState soundState = stateMachine.AddState("sound");
+            soundState.motion = soundClip;
+        }
+
+        EditorUtility.SetDirty(controller);
+        return controller;
+    }
+
+    private static RuntimeAnimatorController CreateZombieController()
+    {
+        const string controllerPath = GeneratedRoot + "/Zumbi.controller";
+        AnimatorController controller =
+            AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
+        if (controller == null)
+        {
+            controller = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
+        }
+
+        AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
+        foreach (ChildAnimatorState childState in stateMachine.states)
+        {
+            stateMachine.RemoveState(childState.state);
+        }
+
+        AnimationClip[] clips = AssetDatabase.LoadAllAssetsAtPath(GraveyardModels + "character-zombie.fbx")
+            .OfType<AnimationClip>()
+            .ToArray();
+
+        AnimationClip idleClip = null;
+        AnimationClip walkClip = null;
+        AnimationClip jumpClip = null;
+        AnimationClip dieClip = null;
+        AnimationClip attackClip = null;
+
+        foreach (AnimationClip clip in clips)
+        {
+            if (clip.name.StartsWith("__preview__")) continue;
+
+            if (clip.name.Equals("idle", System.StringComparison.OrdinalIgnoreCase))
+                idleClip = clip;
+            else if (clip.name.Equals("walk", System.StringComparison.OrdinalIgnoreCase))
+                walkClip = clip;
+            else if (clip.name.Equals("jump", System.StringComparison.OrdinalIgnoreCase))
+                jumpClip = clip;
+            else if (clip.name.Equals("die", System.StringComparison.OrdinalIgnoreCase))
+                dieClip = clip;
+            else if (clip.name.Contains("attack-melee-right"))
+                attackClip = clip;
+        }
+
+        if (idleClip != null)
+        {
+            AnimatorState idleState = stateMachine.AddState("Idle");
+            idleState.motion = idleClip;
+            stateMachine.defaultState = idleState;
+        }
+
+        if (walkClip != null)
+        {
+            AnimatorState walkState = stateMachine.AddState("Walk");
+            walkState.motion = walkClip;
+        }
+
+        if (jumpClip != null)
+        {
+            AnimatorState jumpState = stateMachine.AddState("Jump");
+            jumpState.motion = jumpClip;
+        }
+
+        if (dieClip != null)
+        {
+            AnimatorState dieState = stateMachine.AddState("die");
+            dieState.motion = dieClip;
+        }
+
+        if (attackClip != null)
+        {
+            AnimatorState attackState = stateMachine.AddState("attack-melee-right");
+            attackState.motion = attackClip;
+        }
+
         EditorUtility.SetDirty(controller);
         return controller;
     }

@@ -1,5 +1,3 @@
-using System.Numerics;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Events;
 

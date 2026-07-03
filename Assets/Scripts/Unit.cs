@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,6 +19,9 @@ public class Unit : MonoBehaviour
     public int CurrentActionPoints; // { get; private set; }
     public bool IsDead { get; private set; }
     public bool HasMovedThisTurn { get; private set; }
+    public bool IsMoving { get; private set; }
+    public event System.Action OnMovementStarted;
+    public event System.Action OnMovementFinished;
     public TerrainType CurrentTerrain
     {
         get
@@ -43,7 +47,7 @@ public class Unit : MonoBehaviour
 
     protected virtual void LateUpdate()
     {
-        if (!(this is Enemy))
+        if (!(this is Enemy) && !IsMoving)
         {
             FaceNearestEnemy();
         }
@@ -64,10 +68,20 @@ public class Unit : MonoBehaviour
 
     public bool MoveTo(Vector2Int newGridPosition)
     {
-        if (HasMovedThisTurn) return false;
+        if (HasMovedThisTurn || IsMoving) return false;
 
-        Vector3 previousPosition = transform.position;
         GridCell oldCell = GridManager.Instance.GetCell(GridPosition);
+        GridCell newCell = GridManager.Instance.GetCell(newGridPosition);
+        if (newCell == null || newCell.isOccupied || !newCell.isWalkable) return false;
+
+        // Reconstrói a rota física com busca em largura a partir da posição atual
+        var reachable = Pathfinding.GetReachableCells(GridPosition, moveRange, out var cameFrom);
+        if (!reachable.ContainsKey(newGridPosition)) return false;
+
+        List<Vector2Int> path = Pathfinding.ReconstructPath(GridPosition, newGridPosition, cameFrom);
+        if (path == null || path.Count == 0) return false;
+
+        // Atualização instantânea do estado lógico da grade para outros sistemas
         if (oldCell != null)
         {
             oldCell.isOccupied = false;
@@ -75,26 +89,59 @@ public class Unit : MonoBehaviour
         }
 
         GridPosition = newGridPosition;
-        transform.position = GridManager.Instance.GridToWorld(newGridPosition);
-
-        if (this is Enemy)
-        {
-            FaceDirection(transform.position - previousPosition);
-        }
-
-        GridCell newCell = GridManager.Instance.GetCell(newGridPosition);
-        if (newCell != null)
-        {
-            newCell.isOccupied = true;
-            newCell.occupant = this;
-        }
+        newCell.isOccupied = true;
+        newCell.occupant = this;
 
         HasMovedThisTurn = true;
-        if (newCell != null && newCell.terrainType == TerrainType.Water)
+
+        if (newCell.terrainType == TerrainType.Water)
         {
             Debug.Log($"{name} entrou na água: cada célula de água custa 2 pontos de movimento.");
         }
+
+        // Inicia o deslocamento visual suave
+        StartCoroutine(AnimateMovement(path));
         return true;
+    }
+
+    private IEnumerator AnimateMovement(List<Vector2Int> path)
+    {
+        IsMoving = true;
+        OnMovementStarted?.Invoke();
+
+        Animator anim = GetComponentInChildren<Animator>(true);
+        bool hasWalk = anim != null && anim.HasState(0, Animator.StringToHash("Walk"));
+        bool hasIdle = anim != null && anim.HasState(0, Animator.StringToHash("Idle"));
+
+        if (hasWalk)
+        {
+            anim.Play("Walk");
+        }
+
+        float speed = 13f; // Velocidade de movimento (células por segundo)
+
+        foreach (Vector2Int cellPos in path)
+        {
+            Vector3 targetWorldPos = GridManager.Instance.GridToWorld(cellPos);
+            
+            // Rotaciona visualmente para a direção do movimento
+            FaceDirection(targetWorldPos - transform.position);
+
+            while (Vector3.Distance(transform.position, targetWorldPos) > 0.01f)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, targetWorldPos, speed * Time.deltaTime);
+                yield return null;
+            }
+            transform.position = targetWorldPos;
+        }
+
+        if (hasIdle)
+        {
+            anim.Play("Idle");
+        }
+
+        IsMoving = false;
+        OnMovementFinished?.Invoke();
     }
 
     private void CacheVisualRoot()
@@ -179,6 +226,38 @@ public class Unit : MonoBehaviour
                         + Mathf.Abs(unit.GridPosition.y - GridPosition.y);
             
             if (distance > ability.range) return false;
+
+            // Rotaciona visualmente para encarar o alvo
+            FaceDirection(unit.transform.position - transform.position);
+
+            // Dispara a animação correspondente se disponível
+            Animator anim = GetComponentInChildren<Animator>(true);
+            if (anim != null)
+            {
+                if (this is Enemy)
+                {
+                    if (anim.HasState(0, Animator.StringToHash("attack-melee-right")))
+                    {
+                        anim.Play("attack-melee-right");
+                    }
+                }
+                else
+                {
+                    // Habilidades do gato mapeadas para as animações do fbx
+                    if (ability.name.Contains("Patada") || ability.abilityName.Contains("Patada"))
+                    {
+                        if (anim.HasState(0, Animator.StringToHash("Eat"))) anim.Play("Eat");
+                    }
+                    else if (ability.name.Contains("Miar") || ability.abilityName.Contains("Miar"))
+                    {
+                        if (anim.HasState(0, Animator.StringToHash("sound"))) anim.Play("sound");
+                    }
+                    else if (ability.name.Contains("Cuspir") || ability.abilityName.Contains("Cuspir"))
+                    {
+                        if (anim.HasState(0, Animator.StringToHash("Jump"))) anim.Play("Jump");
+                    }
+                }
+            }
 
             ApplyAbilityEffect(ability, unit);
         }

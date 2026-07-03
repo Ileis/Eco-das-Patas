@@ -26,6 +26,13 @@ public class PlayerAbilityController : MonoBehaviour
         CacheActionButtons();
         BindAbilityButtons();
         HookTurnEvents();
+
+        if (unit != null)
+        {
+            unit.OnMovementStarted += RefreshButtonVisibility;
+            unit.OnMovementFinished += RefreshButtonVisibility;
+        }
+
         RefreshButtonVisibility();
     }
 
@@ -34,6 +41,12 @@ public class PlayerAbilityController : MonoBehaviour
         if (TurnManager.Instance != null)
         {
             TurnManager.Instance.TurnStarted -= HandleTurnStarted;
+        }
+
+        if (unit != null)
+        {
+            unit.OnMovementStarted -= RefreshButtonVisibility;
+            unit.OnMovementFinished -= RefreshButtonVisibility;
         }
     }
 
@@ -67,9 +80,10 @@ public class PlayerAbilityController : MonoBehaviour
 
     private bool IsPlayerTurn()
     {
-        return TurnManager.Instance == null
+        return (TurnManager.Instance == null
             || TurnManager.Instance.CurrentUnit == null
-            || TurnManager.Instance.CurrentUnit == unit;
+            || TurnManager.Instance.CurrentUnit == unit)
+            && (unit == null || !unit.IsMoving);
     }
 
     private void HookTurnEvents()

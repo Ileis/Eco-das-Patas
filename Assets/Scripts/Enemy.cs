@@ -36,7 +36,8 @@ public class Enemy : Unit
             else if (!HasMovedThisTurn)
             {
                 MoveTowards(player.GridPosition);
-                yield return new WaitForSeconds(0.4f);
+                yield return new WaitUntil(() => !IsMoving);
+                yield return new WaitForSeconds(0.2f); // Pequeno atraso após chegar antes de tentar atacar
 
                 distance = ManhattanDistance(GridPosition, player.GridPosition);
                 if (distance <= meleeAbility.range && CanUseAbility(meleeAbility))
