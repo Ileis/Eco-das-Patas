@@ -45,20 +45,6 @@ public static class LevelDesignGenerator
             apartmentFloorMaterial);
 
         GenerateScene(
-            0,
-            "Apartamento",
-            "Fase0_Apartamento",
-            apartmentFloorPrefab,
-            grassPrefab,
-            waterPrefab,
-            rockPrefab,
-            ApartmentTerrain,
-            new Vector2Int[0],
-            new Vector2Int(1, 1),
-            new Vector2Int(8, 2));
-        DecorateApartmentScene();
-
-        GenerateScene(
             1,
             "Arredores",
             "Fase1_Arredores",
