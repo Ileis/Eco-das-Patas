@@ -85,6 +85,11 @@ public class TurnManager : MonoBehaviour
         }
 
         UpdateTurnHud();
+
+        if (GameFlowManager.Instance != null)
+        {
+            GameFlowManager.Instance.CheckGameEndConditions();
+        }
     }
 
     public void NextTurn()

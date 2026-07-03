@@ -45,20 +45,6 @@ public static class LevelDesignGenerator
             apartmentFloorMaterial);
 
         GenerateScene(
-            0,
-            "Apartamento",
-            "Fase0_Apartamento",
-            apartmentFloorPrefab,
-            grassPrefab,
-            waterPrefab,
-            rockPrefab,
-            ApartmentTerrain,
-            new Vector2Int[0],
-            new Vector2Int(1, 1),
-            new Vector2Int(8, 2));
-        DecorateApartmentScene();
-
-        GenerateScene(
             1,
             "Arredores",
             "Fase1_Arredores",
@@ -150,70 +136,69 @@ public static class LevelDesignGenerator
         Transform decoration = CreateGroup("Decoracao", apartment.transform);
 
         CreateApartmentWalls(scene, grid, architecture);
-
         PlaceFurniture(scene, grid, livingRoom, "loungeSofaLong.fbx", "Sofa",
-            new Vector2Int(3, 2), 0f, 10f, 6f, true);
+            new Vector2Int(3, 1), 0f, 15.0f, 10.0f, true, new Vector3(0f, 0f, 2.5f));
         PlaceFurniture(scene, grid, livingRoom, "tableCoffee.fbx", "MesaDeCentro",
-            new Vector2Int(3, 3), 0f, 5.5f, 4f, true);
+            new Vector2Int(3, 2), 0f, 7.0f, 5.0f, true);
         PlaceFurniture(scene, grid, livingRoom, "televisionModern.fbx", "Televisao",
-            new Vector2Int(3, 5), 180f, 5.5f, 6f, true);
+            new Vector2Int(3, 3), 180f, 8.0f, 10.0f, true, new Vector3(0f, 0f, 2.5f));
         PlaceFurniture(scene, grid, livingRoom, "loungeChair.fbx", "Poltrona",
-            new Vector2Int(1, 4), 90f, 5.5f, 6f, true);
+            new Vector2Int(2, 2), 90f, 7.0f, 10.0f, true, new Vector3(2.0f, 0f, 0f));
         PlaceFurniture(scene, grid, livingRoom, "loungeChair.fbx", "PoltronaDireita",
-            new Vector2Int(5, 4), 270f, 5.5f, 6f, true);
+            new Vector2Int(4, 2), 270f, 7.0f, 10.0f, true, new Vector3(-2.0f, 0f, 0f));
         PlaceFurniture(scene, grid, decoration, "rugRectangle.fbx", "TapeteSala",
-            new Vector2Int(3, 4), 0f, 22f, 1f, false, Vector3.up * 0.08f);
+            new Vector2Int(3, 2), 0f, 20.0f, 1.0f, false, new Vector3(0f, 0.08f, 0f));
 
         PlaceFurniture(scene, grid, bedroom, "bedDouble.fbx", "Cama",
-            new Vector2Int(1, 8), 90f, 8.5f, 6f, true);
+            new Vector2Int(1, 8), 90f, 12.0f, 11.0f, true);
         PlaceFurniture(scene, grid, bedroom, "sideTableDrawers.fbx", "CriadoMudo",
-            new Vector2Int(3, 8), 0f, 4.5f, 5f, true);
+            new Vector2Int(2, 8), 90f, 4.0f, 7.0f, true, new Vector3(-2f, 0f, 3.5f));
         PlaceFurniture(scene, grid, bedroom, "bookcaseOpen.fbx", "Estante",
-            new Vector2Int(4, 8), 180f, 6.5f, 8f, true);
+            new Vector2Int(4, 8), 180f, 7.0f, 22.0f, true, new Vector3(1.5f, 0f, 3.5f));
         PlaceFurniture(scene, grid, decoration, "lampRoundTable.fbx", "Abajur",
-            new Vector2Int(3, 8), 0f, 2.5f, 4f, false, new Vector3(0f, 2.8f, 0f));
+            new Vector2Int(2, 8), 0f, 3.0f, 5.0f, false, new Vector3(-2f, 7.0f, 3.5f));
         PlaceFurniture(scene, grid, decoration, "rugSquare.fbx", "TapeteQuarto",
-            new Vector2Int(2, 7), 0f, 15f, 1f, false, Vector3.up * 0.08f);
+            new Vector2Int(2, 7), 0f, 15.0f, 1.0f, false, new Vector3(0f, 0.08f, -0.5f));
 
         PlaceFurniture(scene, grid, kitchen, "kitchenSink.fbx", "Pia",
-            new Vector2Int(6, 8), 180f, 7.5f, 6f, true);
+            new Vector2Int(7, 8), 180f, 5.0f, 10.0f, true, new Vector3(3.5f, 0f, 2.5f));
         PlaceFurniture(scene, grid, kitchen, "kitchenStove.fbx", "Fogao",
-            new Vector2Int(7, 8), 180f, 7f, 6f, true);
+            new Vector2Int(8, 8), 180f, 4.0f, 10.0f, true, new Vector3(-2.0f, 0f, 2.5f));
         PlaceFurniture(scene, grid, kitchen, "kitchenFridge.fbx", "Geladeira",
-            new Vector2Int(8, 8), 180f, 7f, 9f, true);
+            new Vector2Int(8, 8), 180f, 5.0f, 22.0f, true, new Vector3(2.5f, 0f, 2.5f));
         PlaceFurniture(scene, grid, kitchen, "kitchenCabinet.fbx", "Balcao",
-            new Vector2Int(8, 7), 90f, 7f, 6f, true);
+            new Vector2Int(8, 7), 270f, 5.0f, 10.0f, true, new Vector3(2.5f, 0f, 7.5f));
 
         PlaceFurniture(scene, grid, diningRoom, "tableRound.fbx", "MesaDeJantar",
-            new Vector2Int(7, 5), 0f, 7f, 6f, true);
+            new Vector2Int(7, 5), 0f, 8.0f, 9.0f, true);
         PlaceFurniture(scene, grid, diningRoom, "chairCushion.fbx", "CadeiraOeste",
-            new Vector2Int(6, 5), 90f, 4.5f, 6f, true);
+            new Vector2Int(7, 5), 90f, 4.0f, 10.0f, true, new Vector3(-6.5f, 0f, 0f));
         PlaceFurniture(scene, grid, diningRoom, "chairCushion.fbx", "CadeiraSul",
-            new Vector2Int(7, 4), 0f, 4.5f, 6f, true);
+            new Vector2Int(7, 5), 0f, 4.0f, 10.0f, true, new Vector3(0f, 0f, -6.5f));
         PlaceFurniture(scene, grid, diningRoom, "chairCushion.fbx", "CadeiraLeste",
-            new Vector2Int(8, 5), 270f, 4.5f, 6f, true);
+            new Vector2Int(7, 5), 270f, 4.0f, 10.0f, true, new Vector3(6.5f, 0f, 0f));
         PlaceFurniture(scene, grid, decoration, "rugRound.fbx", "TapeteJantar",
-            new Vector2Int(7, 5), 0f, 13f, 1f, false, Vector3.up * 0.08f);
+            new Vector2Int(7, 5), 0f, 15.0f, 1.0f, false, new Vector3(0f, 0.08f, 0f));
 
         PlaceFurniture(scene, grid, decoration, "pottedPlant.fbx", "PlantaSala",
-            new Vector2Int(1, 6), 0f, 4f, 6f, false);
+            new Vector2Int(1, 6), 0f, 4.0f, 12.0f, false, new Vector3(-2f, 0f, 0f));
         PlaceFurniture(scene, grid, decoration, "coatRackStanding.fbx", "Cabideiro",
-            new Vector2Int(8, 1), 0f, 4f, 7f, false);
+            new Vector2Int(9, 1), 0f, 4.0f, 22.0f, false, new Vector3(-2.5f, 0f, 2.5f));
         PlaceFurniture(scene, grid, decoration, "radio.fbx", "Radio",
-            new Vector2Int(3, 5), 0f, 2.5f, 3f, false, new Vector3(0f, 3f, 0f));
+            new Vector2Int(3, 3), 180f, 2.5f, 2.0f, false, new Vector3(2.5f, 5.0f, 2.5f));
 
         CreateWarmLight(apartment.transform, "LuzSala", CellToWorld(grid, new Vector2Int(3, 4)));
         CreateWarmLight(apartment.transform, "LuzCozinha", CellToWorld(grid, new Vector2Int(7, 7)));
-
+ 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
     }
-
+ 
     private static void CreateApartmentWalls(Scene scene, GridManager grid, Transform parent)
     {
         float northZ = grid.origin.z + grid.height * grid.cellSize + 0.2f;
         float eastX = grid.origin.x + grid.width * grid.cellSize + 0.2f;
-
+ 
         for (int x = 0; x < grid.width; x++)
         {
             string model = x == 2 || x == 7
@@ -225,7 +210,7 @@ public static class LevelDesignGenerator
                 northZ);
             PlaceApartmentWall(scene, model, $"ParedeNorte_{x}", parent, position, 0f);
         }
-
+ 
         for (int y = 0; y < grid.height; y++)
         {
             string model = y == 2
@@ -237,7 +222,7 @@ public static class LevelDesignGenerator
                 grid.origin.z + (y + 0.5f) * grid.cellSize);
             PlaceApartmentWall(scene, model, $"ParedeLeste_{y}", parent, position, 90f);
         }
-
+ 
         // Divisória entre o quarto e a cozinha, com passagem central.
         float partitionX = grid.origin.x + 5f * grid.cellSize;
         for (int y = 6; y <= 8; y++)
@@ -249,8 +234,20 @@ public static class LevelDesignGenerator
                 grid.origin.z + (y + 0.5f) * grid.cellSize);
             PlaceApartmentWall(scene, model, $"DivisoriaQuarto_{y}", parent, position, 90f);
         }
-    }
 
+        // Parede divisória horizontal entre o quarto (Y>=6) e a sala (Y<=5), para X de 0 a 4.
+        float dividerZ = grid.origin.z + 6f * grid.cellSize;
+        for (int x = 0; x < 5; x++)
+        {
+            string model = x == 2 ? "wallDoorwayWide.fbx" : "wall.fbx";
+            Vector3 position = new Vector3(
+                grid.origin.x + (x + 0.5f) * grid.cellSize,
+                grid.origin.y,
+                dividerZ);
+            PlaceApartmentWall(scene, model, $"ParedeDivisoriaHorizontal_{x}", parent, position, 0f);
+        }
+    }
+ 
     private static void PlaceApartmentWall(
         Scene scene,
         string modelName,
@@ -267,7 +264,7 @@ public static class LevelDesignGenerator
             position,
             yaw,
             10.1f,
-            7.2f,
+            30.0f,
             false);
     }
 

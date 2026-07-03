@@ -89,21 +89,6 @@ public static class KenneyAssetIntegrator
                 "Um ou mais modelos Kenney não foram importados. Aguarde a importação dos FBX e tente novamente.");
         }
 
-        const string apartmentScene = "Assets/Scenes/Fase0_Apartamento.unity";
-        if (File.Exists(apartmentScene))
-        {
-            ApplyToScene(
-                apartmentScene,
-                treePrefab,
-                grassPrefab,
-                gravePrefab,
-                zombiePrefab,
-                catPrefab,
-                new Vector3[0],
-                new Vector3[0],
-                new Vector3[0]);
-        }
-
         ApplyToScene(
             "Assets/Scenes/Fase1_Arredores.unity",
             treePrefab,

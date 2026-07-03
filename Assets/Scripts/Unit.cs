@@ -251,7 +251,10 @@ public class Unit : MonoBehaviour
 
                     if (usesJump)
                     {
-                        if (anim.HasState(0, Animator.StringToHash("Jump"))) anim.Play("Jump");
+                        if (anim.HasState(0, Animator.StringToHash("Jump")))
+                        {
+                            StartCoroutine(PlayAnimationWithSpeed(anim, "Jump", 1.3f));
+                        }
                     }
                     else if (abilityId.Contains("Ronronar"))
                     {
@@ -320,5 +323,31 @@ public class Unit : MonoBehaviour
 
         Debug.Log($"{name} morreu.");
         Destroy(gameObject);
+    }
+
+    private IEnumerator PlayAnimationWithSpeed(Animator anim, string stateName, float speedMultiplier)
+    {
+        if (anim == null) yield break;
+
+        float originalSpeed = anim.speed;
+        anim.speed = speedMultiplier;
+        anim.Play(stateName);
+
+        yield return null;
+
+        AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
+        if (stateInfo.IsName(stateName))
+        {
+            yield return new WaitForSeconds(stateInfo.length / speedMultiplier);
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        if (anim != null)
+        {
+            anim.speed = originalSpeed;
+        }
     }
 }
