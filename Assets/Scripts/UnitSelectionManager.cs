@@ -65,6 +65,8 @@ public class UnitSelectionManager : MonoBehaviour
 
     private void HandleCellClicked(Vector2Int gridPos)
     {
+        if (selectedUnit != null && selectedUnit.IsMoving) return;
+
         GridCell clickedCell = GridManager.Instance.GetCell(gridPos);
         if (clickedCell == null) return;
         if (selectedUnit == null) return;
@@ -140,7 +142,7 @@ public class UnitSelectionManager : MonoBehaviour
     {
         ClearPathHighlights();
 
-        if (selectedUnit == null) return;
+        if (selectedUnit == null || selectedUnit.IsMoving) return;
         if (currentMode != SelectionMode.Move) return;
         if (!currentHighlightCells.Contains(gridPos)) return;
 

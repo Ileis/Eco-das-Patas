@@ -19,14 +19,24 @@ public static class Pathfinding
     {
         var costSoFar = new Dictionary<Vector2Int, int>();
         cameFrom = new Dictionary<Vector2Int, Vector2Int>();
-        var frontier = new Queue<Vector2Int>();
+        var frontier = new List<Vector2Int>();
 
         costSoFar[origin] = 0;
-        frontier.Enqueue(origin);
+        frontier.Add(origin);
 
         while (frontier.Count > 0)
         {
-            Vector2Int current = frontier.Dequeue();
+            int bestIndex = 0;
+            for (int i = 1; i < frontier.Count; i++)
+            {
+                if (costSoFar[frontier[i]] < costSoFar[frontier[bestIndex]])
+                {
+                    bestIndex = i;
+                }
+            }
+
+            Vector2Int current = frontier[bestIndex];
+            frontier.RemoveAt(bestIndex);
             int currentCost = costSoFar[current];
 
             if (currentCost >= range) continue;
@@ -40,12 +50,17 @@ public static class Pathfinding
                 if (!cell.isWalkable) continue;
                 if (cell.isOccupied) continue;
 
-                int newCost = currentCost + 1;
+                int newCost = currentCost + cell.MovementCost;
+                if (newCost > range) continue;
+
                 if (!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
                 {
                     costSoFar[next] = newCost;
                     cameFrom[next] = current;
-                    frontier.Enqueue(next);
+                    if (!frontier.Contains(next))
+                    {
+                        frontier.Add(next);
+                    }
                 }
             }
         }

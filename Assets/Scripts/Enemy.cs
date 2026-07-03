@@ -17,6 +17,13 @@ public class Enemy : Unit
 
         Unit player = FindPlayerUnit();
 
+        if (player != null && player.IsHiddenFromZombies)
+        {
+            Debug.Log($"{name} perdeu o rastro de {player.name} no mato.");
+            if (TurnManager.Instance != null) TurnManager.Instance.NextTurn();
+            yield break;
+        }
+
         if (player != null && meleeAbility != null)
         {
             int distance = ManhattanDistance(GridPosition, player.GridPosition);
@@ -29,7 +36,8 @@ public class Enemy : Unit
             else if (!HasMovedThisTurn)
             {
                 MoveTowards(player.GridPosition);
-                yield return new WaitForSeconds(0.4f);
+                yield return new WaitUntil(() => !IsMoving);
+                yield return new WaitForSeconds(0.2f); // Pequeno atraso após chegar antes de tentar atacar
 
                 distance = ManhattanDistance(GridPosition, player.GridPosition);
                 if (distance <= meleeAbility.range && CanUseAbility(meleeAbility))

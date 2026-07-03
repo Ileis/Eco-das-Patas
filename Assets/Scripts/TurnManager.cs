@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public class TurnManager : MonoBehaviour
 {
-    public GameObject TurnIndicator;
     public static TurnManager Instance { get; private set; }
 
     public event Action<Unit> TurnStarted;
@@ -22,6 +21,7 @@ public class TurnManager : MonoBehaviour
     private Font _uiFontTemplate;
     private Sprite _uiSpriteTemplate;
 
+    private readonly Vector3 _indicatorLocalOffset = new(0f, 15f, 0f);
     private readonly Vector2 _hudAnchorOffset = new(-26f, -28f);
     private readonly Vector2 _hudSize = new(190f, 42f);
 
@@ -39,8 +39,38 @@ public class TurnManager : MonoBehaviour
         _turnOrder = unitsInScene.OrderByDescending(u => u.initiative).ToList();
         CacheUiTemplates();
         BuildTurnHud();
+        BindEndTurnButton();
 
         NextTurn();
+    }
+
+    private void BindEndTurnButton()
+    {
+        Button[] buttons = FindObjectsByType<Button>();
+        foreach (Button button in buttons)
+        {
+            if (button == null) continue;
+
+            Text label = button.GetComponentInChildren<Text>(true);
+            if (label == null || label.text != "Fim de Turno") continue;
+
+            bool hasValidListener = false;
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                if (button.onClick.GetPersistentTarget(i) != null
+                    && button.onClick.GetPersistentMethodName(i)
+                        == nameof(EndTurnButtonPressed))
+                {
+                    hasValidListener = true;
+                    break;
+                }
+            }
+
+            if (!hasValidListener)
+            {
+                button.onClick.AddListener(EndTurnButtonPressed);
+            }
+        }
     }
 
     public void RemoveUnit(Unit unit)
@@ -77,7 +107,7 @@ public class TurnManager : MonoBehaviour
         {
             enemy.TakeAITurn();
         }
-                
+
     }
 
     public void EndTurnButtonPressed()
@@ -132,7 +162,9 @@ public class TurnManager : MonoBehaviour
         if (_hudCanvas.transform.Find("TurnHudRoot") != null)
         {
             Transform existingRoot = _hudCanvas.transform.Find("TurnHudRoot");
-            _turnProgressFill = existingRoot.Find("TurnProgressFill")?.GetComponent<Image>();
+            _turnProgressFill = existingRoot
+                .Find("TurnProgressBackground/TurnProgressFill")
+                ?.GetComponent<Image>();
             _turnCounterText = existingRoot.Find("TurnCounterText")?.GetComponent<Text>();
             UpdateTurnHud();
             return;
@@ -230,9 +262,32 @@ public class TurnManager : MonoBehaviour
 
         if (unit == null) return;
 
-        Vector3 worldPos = GridManager.Instance.GridToWorld(unit.GridPosition) + Vector3.up * 5f;
-        _activeTurnIndicator = Instantiate(TurnIndicator, worldPos, Quaternion.identity, unit.transform);
-        if (_activeTurnIndicator == null) return;
+        _activeTurnIndicator = CreateTurnIndicator();
+        _activeTurnIndicator.transform.SetParent(unit.transform, false);
+        _activeTurnIndicator.transform.localPosition = _indicatorLocalOffset;
+        _activeTurnIndicator.transform.localRotation = Quaternion.identity;
+    }
 
+    private GameObject CreateTurnIndicator()
+    {
+        GameObject indicator = new("ActiveTurnIndicator");
+        TextMesh textMesh = indicator.AddComponent<TextMesh>();
+        textMesh.text = "▼";
+        textMesh.font = _uiFontTemplate != null
+            ? _uiFontTemplate
+            : Resources.GetBuiltinResource<Font>("Arial.ttf");
+        textMesh.fontSize = 80;
+        textMesh.characterSize = 1.2f;
+        textMesh.anchor = TextAnchor.MiddleCenter;
+        textMesh.alignment = TextAlignment.Center;
+        textMesh.color = new Color(0.92f, 0.15f, 0.15f, 1f);
+
+        MeshRenderer renderer = indicator.GetComponent<MeshRenderer>();
+        if (renderer != null && textMesh.font != null)
+        {
+            renderer.material = textMesh.font.material;
+        }
+
+        return indicator;
     }
 }

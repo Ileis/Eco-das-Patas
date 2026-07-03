@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class PlayerAbilityController : MonoBehaviour
@@ -12,8 +13,7 @@ public class PlayerAbilityController : MonoBehaviour
     public Ability cuspir;
     public Ability ronronar;
 
-    private readonly List<Button> combatButtons = new();
-    private Button moveButton;
+    private readonly List<Button> actionButtons = new();
 
     private void Start()
     {
@@ -22,9 +22,17 @@ public class PlayerAbilityController : MonoBehaviour
             selectionManager = FindAnyObjectByType<UnitSelectionManager>();
         }
 
-        CacheCombatButtons();
-        CreateMoveButtonIfNeeded();
+        EnsureMoveButton();
+        CacheActionButtons();
+        BindAbilityButtons();
         HookTurnEvents();
+
+        if (unit != null)
+        {
+            unit.OnMovementStarted += RefreshButtonVisibility;
+            unit.OnMovementFinished += RefreshButtonVisibility;
+        }
+
         RefreshButtonVisibility();
     }
 
@@ -33,6 +41,12 @@ public class PlayerAbilityController : MonoBehaviour
         if (TurnManager.Instance != null)
         {
             TurnManager.Instance.TurnStarted -= HandleTurnStarted;
+        }
+
+        if (unit != null)
+        {
+            unit.OnMovementStarted -= RefreshButtonVisibility;
+            unit.OnMovementFinished -= RefreshButtonVisibility;
         }
     }
 
@@ -66,9 +80,10 @@ public class PlayerAbilityController : MonoBehaviour
 
     private bool IsPlayerTurn()
     {
-        return TurnManager.Instance == null
+        return (TurnManager.Instance == null
             || TurnManager.Instance.CurrentUnit == null
-            || TurnManager.Instance.CurrentUnit == unit;
+            || TurnManager.Instance.CurrentUnit == unit)
+            && (unit == null || !unit.IsMoving);
     }
 
     private void HookTurnEvents()
@@ -92,24 +107,20 @@ public class PlayerAbilityController : MonoBehaviour
     {
         bool visible = IsPlayerTurn();
 
-        for (int i = 0; i < combatButtons.Count; i++)
+        for (int i = 0; i < actionButtons.Count; i++)
         {
-            if (combatButtons[i] != null)
+            if (actionButtons[i] != null)
             {
-                combatButtons[i].gameObject.SetActive(visible);
+                actionButtons[i].gameObject.SetActive(visible);
             }
-        }
-
-        if (moveButton != null)
-        {
-            moveButton.gameObject.SetActive(visible);
         }
     }
 
-    private void CacheCombatButtons()
+    private void CacheActionButtons()
     {
-        combatButtons.Clear();
+        actionButtons.Clear();
 
+        AddButtonByLabel("Andar");
         AddButtonByLabel("Patada");
         AddButtonByLabel("Miar");
         AddButtonByLabel("Cuspir");
@@ -120,42 +131,79 @@ public class PlayerAbilityController : MonoBehaviour
     private void AddButtonByLabel(string label)
     {
         Button button = FindButtonByLabel(label);
-        if (button != null && !combatButtons.Contains(button))
+        if (button != null && !actionButtons.Contains(button))
         {
-            combatButtons.Add(button);
+            actionButtons.Add(button);
         }
     }
 
-    private void CreateMoveButtonIfNeeded()
+    private void BindAbilityButtons()
     {
-        moveButton = FindButtonByLabel("Andar");
-        if (moveButton != null) return;
+        BindButton("Patada", nameof(UsePatada), UsePatada);
+        BindButton("Miar", nameof(UseMiar), UseMiar);
+        BindButton("Cuspir", nameof(UseCuspir), UseCuspir);
+        BindButton("Ronronar", nameof(UseRonronar), UseRonronar);
+    }
 
-        Button template = combatButtons.Count > 0 ? combatButtons[0] : FindAnyObjectByType<Button>();
-        if (template == null) return;
+    private void BindButton(string label, string methodName, UnityAction action)
+    {
+        Button button = FindButtonByLabel(label);
+        if (button == null) return;
 
-        GameObject clone = Instantiate(template.gameObject, template.transform.parent);
-        clone.name = "Move Button";
-
-        RectTransform templateRect = template.GetComponent<RectTransform>();
-        RectTransform cloneRect = clone.GetComponent<RectTransform>();
-        if (templateRect != null && cloneRect != null)
+        for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
         {
-            cloneRect.anchoredPosition = templateRect.anchoredPosition + new Vector2(0f, 38.7f);
-            cloneRect.sizeDelta = templateRect.sizeDelta;
-            cloneRect.anchorMin = templateRect.anchorMin;
-            cloneRect.anchorMax = templateRect.anchorMax;
-            cloneRect.pivot = templateRect.pivot;
-            cloneRect.localScale = templateRect.localScale;
+            if (button.onClick.GetPersistentTarget(i) == this
+                && button.onClick.GetPersistentMethodName(i) == methodName)
+            {
+                return;
+            }
         }
 
-        moveButton = clone.GetComponent<Button>();
+        button.onClick.RemoveListener(action);
+        button.onClick.AddListener(action);
+    }
+
+    private void EnsureMoveButton()
+    {
+        Button moveButton = FindButtonByLabel("Andar");
+        bool wasCreated = moveButton == null;
+
+        if (wasCreated)
+        {
+            Button template = FindButtonByLabel("Patada") ?? FindAnyObjectByType<Button>();
+            if (template == null) return;
+
+            GameObject clone = Instantiate(template.gameObject, template.transform.parent);
+            clone.name = "Move Button";
+
+            RectTransform templateRect = template.GetComponent<RectTransform>();
+            RectTransform cloneRect = clone.GetComponent<RectTransform>();
+            if (templateRect != null && cloneRect != null)
+            {
+                cloneRect.anchoredPosition =
+                    templateRect.anchoredPosition + new Vector2(0f, 38.7f);
+                cloneRect.sizeDelta = templateRect.sizeDelta;
+                cloneRect.anchorMin = templateRect.anchorMin;
+                cloneRect.anchorMax = templateRect.anchorMax;
+                cloneRect.pivot = templateRect.pivot;
+                cloneRect.localScale = templateRect.localScale;
+            }
+
+            moveButton = clone.GetComponent<Button>();
+        }
+
         if (moveButton == null) return;
 
-        moveButton.onClick.RemoveAllListeners();
+        if (wasCreated)
+        {
+            moveButton.onClick.RemoveAllListeners();
+        }
+        else
+        {
+            moveButton.onClick.RemoveListener(UseMove);
+        }
         moveButton.onClick.AddListener(UseMove);
         SetButtonLabel(moveButton, "Andar");
-        moveButton.gameObject.SetActive(IsPlayerTurn());
     }
 
     private Button FindButtonByLabel(string label)
