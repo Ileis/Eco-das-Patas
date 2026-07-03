@@ -10,6 +10,10 @@ using UnityEngine.SceneManagement;
 public static class KenneyAssetIntegrator
 {
     private const float CellScale = 10f;
+    private const float CatLocalScale = 0.5f;
+    private const float CatLocalVerticalOffset = -0.45f;
+    private const float ZombieLocalScale = 0.5f;
+    private const float ZombieLocalVerticalOffset = 0.2f;
     private const string NatureModels =
         "Assets/ThirdParty/Kenney/NatureKit/Models/FBX format/";
     private const string GraveyardModels =
@@ -51,14 +55,21 @@ public static class KenneyAssetIntegrator
             PrefabRoot + "/Lapide.prefab",
             0.48f * CellScale,
             0.75f * CellScale);
+        ConfigureZombieModelImporter();
         RuntimeAnimatorController zombieController = CreateZombieController();
+        Avatar zombieAvatar = AssetDatabase
+            .LoadAllAssetsAtPath(GraveyardModels + "character-zombie.fbx")
+            .OfType<Avatar>()
+            .FirstOrDefault();
         GameObject zombiePrefab = CreateVisualPrefab(
             GraveyardModels + "character-zombie.fbx",
             PrefabRoot + "/Zumbi_Visual.prefab",
             0.48f * CellScale,
             1.05f * CellScale,
             zombieController,
-            -0.04f * CellScale);
+            -0.04f * CellScale,
+            zombieAvatar);
+        Avatar catAvatar = ConfigureCatModelImporters();
         RuntimeAnimatorController catController = CreateCatIdleController();
         GameObject catPrefab = CreateVisualPrefab(
             CatRoot + "cat_Idle.fbx",
@@ -66,7 +77,8 @@ public static class KenneyAssetIntegrator
             0.52f * CellScale,
             0.62f * CellScale,
             catController,
-            -0.04f * CellScale);
+            -0.04f * CellScale,
+            catAvatar);
         Texture2D catTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(CatRoot + "Texture.png");
         ApplyTexture(catPrefab, catTexture);
 
@@ -145,7 +157,7 @@ public static class KenneyAssetIntegrator
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("Assets Kenney integrados às três fases.");
+        Debug.Log("Assets Kenney integrados ao apartamento e às três fases externas.");
     }
 
     private static GameObject CreateObstaclePrefab(
@@ -175,7 +187,8 @@ public static class KenneyAssetIntegrator
         float targetWidth,
         float targetHeight,
         RuntimeAnimatorController animatorController = null,
-        float groundInset = 0f)
+        float groundInset = 0f,
+        Avatar animatorAvatar = null)
     {
         GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
         if (model == null) return null;
@@ -190,6 +203,7 @@ public static class KenneyAssetIntegrator
         if (animator != null && animatorController != null)
         {
             animator.runtimeAnimatorController = animatorController;
+            if (animatorAvatar != null) animator.avatar = animatorAvatar;
             animator.applyRootMotion = false;
         }
 
@@ -273,51 +287,97 @@ public static class KenneyAssetIntegrator
             stateMachine.RemoveState(childState.state);
         }
 
-        AnimationClip idleClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Idle.fbx")
-            .OfType<AnimationClip>()
-            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
-        AnimatorState idleState = stateMachine.AddState("Idle");
-        idleState.motion = idleClip;
-        stateMachine.defaultState = idleState;
-
-        AnimationClip walkClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Walk.fbx")
-            .OfType<AnimationClip>()
-            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
-        if (walkClip != null)
+        (string StateName, string FileName, bool ReturnsToIdle)[] animations =
         {
-            AnimatorState walkState = stateMachine.AddState("Walk");
-            walkState.motion = walkClip;
+            ("Idle", "cat_Idle.fbx", false),
+            ("Walk", "cat_Walk.fbx", false),
+            ("Jump", "cat_Jump.fbx", true),
+            ("Eat", "cat_Eat.fbx", true),
+            ("sound", "cat_Sound.fbx", true)
+        };
+
+        AnimatorState idleState = null;
+        List<(AnimatorState State, bool ReturnsToIdle)> states =
+            new List<(AnimatorState State, bool ReturnsToIdle)>();
+
+        foreach ((string stateName, string fileName, bool returnsToIdle) in animations)
+        {
+            AnimationClip clip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + fileName)
+                .OfType<AnimationClip>()
+                .FirstOrDefault(animation => !animation.name.StartsWith("__preview__"));
+            if (clip == null)
+            {
+                throw new FileNotFoundException(
+                    $"O clipe {stateName} do gato não foi importado de {fileName}.");
+            }
+
+            AnimatorState state = stateMachine.AddState(stateName);
+            state.motion = clip;
+            states.Add((state, returnsToIdle));
+
+            if (stateName == "Idle")
+            {
+                idleState = state;
+                stateMachine.defaultState = state;
+            }
         }
 
-        AnimationClip jumpClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Jump.fbx")
-            .OfType<AnimationClip>()
-            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
-        if (jumpClip != null)
+        foreach ((AnimatorState state, bool returnsToIdle) in states)
         {
-            AnimatorState jumpState = stateMachine.AddState("Jump");
-            jumpState.motion = jumpClip;
-        }
+            if (!returnsToIdle) continue;
 
-        AnimationClip eatClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Eat.fbx")
-            .OfType<AnimationClip>()
-            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
-        if (eatClip != null)
-        {
-            AnimatorState eatState = stateMachine.AddState("Eat");
-            eatState.motion = eatClip;
-        }
-
-        AnimationClip soundClip = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Sound.fbx")
-            .OfType<AnimationClip>()
-            .FirstOrDefault(clip => !clip.name.StartsWith("__preview__"));
-        if (soundClip != null)
-        {
-            AnimatorState soundState = stateMachine.AddState("sound");
-            soundState.motion = soundClip;
+            AnimatorStateTransition returnToIdle = state.AddTransition(idleState);
+            returnToIdle.hasExitTime = true;
+            returnToIdle.exitTime = 0.95f;
+            returnToIdle.duration = 0.1f;
         }
 
         EditorUtility.SetDirty(controller);
+        AssetDatabase.SaveAssetIfDirty(controller);
         return controller;
+    }
+
+    private static Avatar ConfigureCatModelImporters()
+    {
+        ConfigureCatModelImporter("cat_Idle.fbx", "Idle", true, null);
+        Avatar idleAvatar = AssetDatabase.LoadAllAssetsAtPath(CatRoot + "cat_Idle.fbx")
+            .OfType<Avatar>()
+            .FirstOrDefault();
+
+        ConfigureCatModelImporter("cat_Walk.fbx", "Walk", true, idleAvatar);
+        ConfigureCatModelImporter("cat_Jump.fbx", "Jump", false, idleAvatar);
+        ConfigureCatModelImporter("cat_Eat.fbx", "Eat", false, idleAvatar);
+        ConfigureCatModelImporter("cat_Sound.fbx", "sound", false, idleAvatar);
+        return idleAvatar;
+    }
+
+    private static void ConfigureCatModelImporter(
+        string fileName,
+        string clipName,
+        bool shouldLoop,
+        Avatar sourceAvatar)
+    {
+        ModelImporter importer = AssetImporter.GetAtPath(CatRoot + fileName) as ModelImporter;
+        if (importer == null) return;
+
+        importer.importAnimation = true;
+        importer.animationType = ModelImporterAnimationType.Generic;
+        importer.avatarSetup = sourceAvatar == null
+            ? ModelImporterAvatarSetup.CreateFromThisModel
+            : ModelImporterAvatarSetup.CopyFromOther;
+        importer.sourceAvatar = sourceAvatar;
+
+        ModelImporterClipAnimation[] clips = importer.clipAnimations;
+        if (clips.Length == 0) clips = importer.defaultClipAnimations;
+        foreach (ModelImporterClipAnimation clip in clips)
+        {
+            clip.name = clipName;
+            clip.loopTime = shouldLoop;
+            clip.loopPose = shouldLoop;
+        }
+
+        importer.clipAnimations = clips;
+        importer.SaveAndReimport();
     }
 
     private static RuntimeAnimatorController CreateZombieController()
@@ -336,65 +396,90 @@ public static class KenneyAssetIntegrator
             stateMachine.RemoveState(childState.state);
         }
 
-        AnimationClip[] clips = AssetDatabase.LoadAllAssetsAtPath(GraveyardModels + "character-zombie.fbx")
+        AnimationClip[] clips = AssetDatabase
+            .LoadAllAssetsAtPath(GraveyardModels + "character-zombie.fbx")
             .OfType<AnimationClip>()
+            .Where(clip => !clip.name.StartsWith("__preview__"))
+            .OrderBy(clip => clip.name)
             .ToArray();
 
-        AnimationClip idleClip = null;
-        AnimationClip walkClip = null;
-        AnimationClip jumpClip = null;
-        AnimationClip dieClip = null;
-        AnimationClip attackClip = null;
-
-        foreach (AnimationClip clip in clips)
+        if (clips.Length == 0)
         {
-            if (clip.name.StartsWith("__preview__")) continue;
-
-            if (clip.name.Equals("idle", System.StringComparison.OrdinalIgnoreCase))
-                idleClip = clip;
-            else if (clip.name.Equals("walk", System.StringComparison.OrdinalIgnoreCase))
-                walkClip = clip;
-            else if (clip.name.Equals("jump", System.StringComparison.OrdinalIgnoreCase))
-                jumpClip = clip;
-            else if (clip.name.Equals("die", System.StringComparison.OrdinalIgnoreCase))
-                dieClip = clip;
-            else if (clip.name.Contains("attack-melee-right"))
-                attackClip = clip;
+            throw new FileNotFoundException(
+                "Nenhum clipe de animação foi importado de character-zombie.fbx.");
         }
 
+        AnimationClip idleClip = clips.FirstOrDefault(
+            clip => clip.name.Equals("idle", System.StringComparison.OrdinalIgnoreCase));
+        AnimatorState idleState = null;
         if (idleClip != null)
         {
-            AnimatorState idleState = stateMachine.AddState("Idle");
+            idleState = stateMachine.AddState("Idle");
             idleState.motion = idleClip;
             stateMachine.defaultState = idleState;
         }
 
-        if (walkClip != null)
+        foreach (AnimationClip clip in clips)
         {
-            AnimatorState walkState = stateMachine.AddState("Walk");
-            walkState.motion = walkClip;
-        }
+            if (clip == idleClip) continue;
 
-        if (jumpClip != null)
-        {
-            AnimatorState jumpState = stateMachine.AddState("Jump");
-            jumpState.motion = jumpClip;
-        }
+            string stateName = GetZombieStateName(clip.name);
+            AnimatorState state = stateMachine.AddState(stateName);
+            state.motion = clip;
 
-        if (dieClip != null)
-        {
-            AnimatorState dieState = stateMachine.AddState("die");
-            dieState.motion = dieClip;
-        }
+            if (idleState == null)
+            {
+                idleState = state;
+                stateMachine.defaultState = state;
+            }
 
-        if (attackClip != null)
-        {
-            AnimatorState attackState = stateMachine.AddState("attack-melee-right");
-            attackState.motion = attackClip;
+            if (stateName.StartsWith("attack-", System.StringComparison.OrdinalIgnoreCase))
+            {
+                AnimatorStateTransition returnToIdle = state.AddTransition(idleState);
+                returnToIdle.hasExitTime = true;
+                returnToIdle.exitTime = 0.95f;
+                returnToIdle.duration = 0.1f;
+            }
         }
 
         EditorUtility.SetDirty(controller);
+        AssetDatabase.SaveAssetIfDirty(controller);
         return controller;
+    }
+
+    private static void ConfigureZombieModelImporter()
+    {
+        string modelPath = GraveyardModels + "character-zombie.fbx";
+        ModelImporter importer = AssetImporter.GetAtPath(modelPath) as ModelImporter;
+        if (importer == null) return;
+
+        importer.importAnimation = true;
+        importer.animationType = ModelImporterAnimationType.Generic;
+        importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+
+        ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;
+        foreach (ModelImporterClipAnimation clip in clips)
+        {
+            bool shouldLoop =
+                clip.name.Equals("idle", System.StringComparison.OrdinalIgnoreCase)
+                || clip.name.Equals("walk", System.StringComparison.OrdinalIgnoreCase);
+            clip.loopTime = shouldLoop;
+            clip.loopPose = shouldLoop;
+        }
+
+        // Persist all takes explicitly instead of depending on Unity's implicit
+        // default import, which previously left clipAnimations empty in the meta.
+        importer.clipAnimations = clips;
+        importer.SaveAndReimport();
+    }
+
+    private static string GetZombieStateName(string clipName)
+    {
+        if (clipName.Equals("idle", System.StringComparison.OrdinalIgnoreCase)) return "Idle";
+        if (clipName.Equals("walk", System.StringComparison.OrdinalIgnoreCase)) return "Walk";
+        if (clipName.Equals("jump", System.StringComparison.OrdinalIgnoreCase)) return "Jump";
+        if (clipName.Equals("die", System.StringComparison.OrdinalIgnoreCase)) return "die";
+        return clipName;
     }
 
     private static Material ConvertMaterial(Material source, string prefix, int index)
@@ -470,9 +555,7 @@ public static class KenneyAssetIntegrator
 
             GameObject zombie = (GameObject)PrefabUtility.InstantiatePrefab(zombiePrefab, scene);
             zombie.name = "VisualKenney";
-            zombie.transform.SetParent(enemy.transform, false);
-            zombie.transform.localPosition = Vector3.zero;
-            zombie.transform.localRotation = Quaternion.identity;
+            AttachZombieVisual(zombie.transform, enemy.transform);
         }
 
         Unit player = Object.FindObjectsByType<Unit>(FindObjectsInactive.Include)
@@ -487,13 +570,27 @@ public static class KenneyAssetIntegrator
 
             GameObject cat = (GameObject)PrefabUtility.InstantiatePrefab(catPrefab, scene);
             cat.name = "VisualGato";
-            cat.transform.SetParent(player.transform, false);
-            cat.transform.localPosition = Vector3.zero;
-            cat.transform.localRotation = Quaternion.identity;
+            AttachCatVisual(cat.transform, player.transform);
         }
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void AttachZombieVisual(Transform zombie, Transform enemy)
+    {
+        zombie.SetParent(enemy, false);
+        zombie.localPosition = new Vector3(0f, ZombieLocalVerticalOffset, 0f);
+        zombie.localRotation = Quaternion.identity;
+        zombie.localScale = Vector3.one * ZombieLocalScale;
+    }
+
+    private static void AttachCatVisual(Transform cat, Transform player)
+    {
+        cat.SetParent(player, false);
+        cat.localPosition = new Vector3(0f, CatLocalVerticalOffset, 0f);
+        cat.localRotation = Quaternion.identity;
+        cat.localScale = Vector3.one * CatLocalScale;
     }
 
     private static void AddDecorations(

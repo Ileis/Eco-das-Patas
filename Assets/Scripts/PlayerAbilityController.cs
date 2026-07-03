@@ -180,8 +180,7 @@ public class PlayerAbilityController : MonoBehaviour
             RectTransform cloneRect = clone.GetComponent<RectTransform>();
             if (templateRect != null && cloneRect != null)
             {
-                cloneRect.anchoredPosition =
-                    templateRect.anchoredPosition + new Vector2(0f, 38.7f);
+                cloneRect.anchoredPosition3D = new Vector3(-880f, -300f, 0f);
                 cloneRect.sizeDelta = templateRect.sizeDelta;
                 cloneRect.anchorMin = templateRect.anchorMin;
                 cloneRect.anchorMax = templateRect.anchorMax;
@@ -193,6 +192,12 @@ public class PlayerAbilityController : MonoBehaviour
         }
 
         if (moveButton == null) return;
+
+        RectTransform moveRect = moveButton.GetComponent<RectTransform>();
+        if (moveRect != null)
+        {
+            moveRect.anchoredPosition3D = new Vector3(-880f, -300f, 0f);
+        }
 
         if (wasCreated)
         {
