@@ -167,10 +167,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1080, y: 1920}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -1581,6 +1581,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAbilityController
   unit: {fileID: 1058539419}
+  selectionManager: {fileID: 0}
   patada: {fileID: 11400000, guid: 8cec78e155432bc38a60d80847a3b918, type: 2}
   miar: {fileID: 11400000, guid: c7a4ecaf15af37cafaef444c5016ac17, type: 2}
   cuspir: {fileID: 11400000, guid: 287c6e535e5e9ee69a0cc0bf23556d54, type: 2}
@@ -2823,6 +2824,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5d2d1b84146ec18b97f3d6e3c7c7865, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnManager
+  TurnIndicator: {fileID: 1767263776103305873, guid: d35cc177eba602e7cbd947523f0d3609, type: 3}
 --- !u!4 &1922954150
 Transform:
   m_ObjectHideFlags: 0

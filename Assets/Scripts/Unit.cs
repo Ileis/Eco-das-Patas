@@ -82,16 +82,21 @@ public class Unit : MonoBehaviour
         return true;
     }
 
-    public bool TryUseAbility(Ability ability, Unit target)
+    public bool TryUseAbility(Ability ability, object target)
     {
-        if (!CanUseAbility(ability) || target == null) return false;
+        Debug.Log(target);
+        if (!CanUseAbility(ability)) return false;
 
-        int distance = Mathf.Abs(target.GridPosition.x - GridPosition.x)
-                     + Mathf.Abs(target.GridPosition.y - GridPosition.y);
-        
-        if (distance > ability.range) return false;
+        if (target is Unit unit)
+        {
 
-        ApplyAbilityEffect(ability, target);
+            int distance = Mathf.Abs(unit.GridPosition.x - GridPosition.x)
+                        + Mathf.Abs(unit.GridPosition.y - GridPosition.y);
+            
+            if (distance > ability.range) return false;
+
+            ApplyAbilityEffect(ability, unit);
+        }
 
         CurrentActionPoints -= ability.actionPoinCost;
         usesThisTurn.TryGetValue(ability, out int uses);
@@ -107,16 +112,13 @@ public class Unit : MonoBehaviour
             case AbilityType.Melee:
             case AbilityType.Ranged:
                 target.TakeDamage(ability.power);
-                Debug.Log($"{name} usou {ability.abilityName} em {target.name}, causando ${ability.power} de dano.");
                 break;
 
             case AbilityType.Taunt:
-                Debug.Log($"{name} provocou {target.name} com {ability.abilityName}.");
                 break;
 
             case AbilityType.Buff:
                 CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + ability.power);
-                Debug.Log($"{name} usou ${ability.abilityName} e recuperou {ability.power} de vida.");
                 break;
         }
     }

@@ -67,21 +67,22 @@ public class UnitSelectionManager : MonoBehaviour
     {
         GridCell clickedCell = GridManager.Instance.GetCell(gridPos);
         if (clickedCell == null) return;
+        if (selectedUnit == null) return;
 
-        if (selectedUnit == null)
-        {
-            if (clickedCell.occupant is Unit unit)
-            {
-                TrySelectCurrentUnit(unit);
-            }
-            return;
-        }
+        // if (selectedUnit == null)
+        // {
+        //     if (clickedCell.occupant is Unit unit)
+        //     {
+        //         TrySelectCurrentUnit(unit);
+        //     }
+        //     return;
+        // }
 
         if (currentMode == SelectionMode.AbilityTarget)
         {
-            if (currentHighlightCells.Contains(gridPos) && clickedCell.occupant is Unit targetUnit)
+            if (currentHighlightCells.Contains(gridPos))
             {
-                if (selectedUnit.TryUseAbility(selectedAbility, targetUnit))
+                if (selectedUnit.TryUseAbility(selectedAbility, clickedCell.occupant))
                 {
                     if (selectedUnit != null && !selectedUnit.IsDead && CanContinueActing())
                     {
@@ -95,10 +96,10 @@ public class UnitSelectionManager : MonoBehaviour
                 return;
             }
 
-            if (clickedCell.occupant is Unit abilityUnit && TrySelectCurrentUnit(abilityUnit))
-            {
-                return;
-            }
+            // if (clickedCell.occupant is Unit abilityUnit && TrySelectCurrentUnit(abilityUnit))
+            // {
+            //     return;
+            // }
 
             return;
         }
@@ -175,6 +176,7 @@ public class UnitSelectionManager : MonoBehaviour
         if (unit == null || ability == null || unit.IsDead) return false;
         if (TurnManager.Instance != null && unit != TurnManager.Instance.CurrentUnit) return false;
         if (unit is Enemy) return false;
+        if (!unit.CanUseAbility(ability)) return false;
 
         selectedUnit = unit;
         selectedAbility = ability;

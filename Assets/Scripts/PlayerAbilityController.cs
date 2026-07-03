@@ -42,16 +42,6 @@ public class PlayerAbilityController : MonoBehaviour
     public void UseRonronar() => BeginAbilityTargeting(ronronar);
     public void UseMove() => BeginMove();
 
-    // public void UseRonronar()
-    // {
-    //     if (!IsPlayerTurn() || unit == null || ronronar == null) return;
-
-    //     if (!unit.TryUseAbility(ronronar, unit))
-    //     {
-    //         Debug.Log($"Não foi possível usar {ronronar.abilityName}.");
-    //     }
-    // }
-
     private void BeginAbilityTargeting(Ability ability)
     {
         if (!IsPlayerTurn() || unit == null || ability == null) return;
