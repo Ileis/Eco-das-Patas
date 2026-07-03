@@ -249,11 +249,15 @@ public class UnitSelectionManager : MonoBehaviour
 
         if (GridManager.Instance == null) return;
 
-        for (int x = 0; x < GridManager.Instance.width; x++)
+        for (int x = origin.x - range; x <= origin.x + range; x++)
         {
-            for (int y = 0; y < GridManager.Instance.height; y++)
+            for (int y = origin.y - range; y <= origin.y + range; y++)
             {
-                Vector2Int pos = new Vector2Int(x, y);
+                if (selectedAbility.type != AbilityType.Buff &&  x == origin.x && y == origin.y) continue;
+
+                Vector2Int pos = new(x, y);
+                if (!GridManager.Instance.IsValidGridPosition(pos)) continue;
+
                 int distance = Mathf.Abs(pos.x - origin.x) + Mathf.Abs(pos.y - origin.y);
                 if (distance > range) continue;
 
