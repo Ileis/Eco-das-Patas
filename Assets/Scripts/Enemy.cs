@@ -17,6 +17,13 @@ public class Enemy : Unit
 
         Unit player = FindPlayerUnit();
 
+        if (player != null && player.IsHiddenFromZombies)
+        {
+            Debug.Log($"{name} perdeu o rastro de {player.name} no mato.");
+            if (TurnManager.Instance != null) TurnManager.Instance.NextTurn();
+            yield break;
+        }
+
         if (player != null && meleeAbility != null)
         {
             int distance = ManhattanDistance(GridPosition, player.GridPosition);

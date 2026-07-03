@@ -1,11 +1,13 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
     public Vector2Int startPosition;
     public int moveRange = 3;
+    [Header("Orientação visual")]
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private float visualYawOffset;
     public Vector2Int GridPosition { get; private set; }
 
     public int maxHealth = 10;
@@ -16,6 +18,17 @@ public class Unit : MonoBehaviour
     public int CurrentActionPoints; // { get; private set; }
     public bool IsDead { get; private set; }
     public bool HasMovedThisTurn { get; private set; }
+    public TerrainType CurrentTerrain
+    {
+        get
+        {
+            GridCell cell = GridManager.Instance != null
+                ? GridManager.Instance.GetCell(GridPosition)
+                : null;
+            return cell != null ? cell.terrainType : TerrainType.Dirt;
+        }
+    }
+    public bool IsHiddenFromZombies => CurrentTerrain == TerrainType.Grass;
 
     private readonly Dictionary<Ability, int> usesThisTurn = new();
 
@@ -24,6 +37,16 @@ public class Unit : MonoBehaviour
         PlaceOnGrid(startPosition);
         CurrentHealth = maxHealth;
         CurrentActionPoints = maxActionPoints;
+        CacheVisualRoot();
+        FaceNearestEnemy();
+    }
+
+    protected virtual void LateUpdate()
+    {
+        if (!(this is Enemy))
+        {
+            FaceNearestEnemy();
+        }
     }
 
     public void PlaceOnGrid(Vector2Int gridPosition)
@@ -43,6 +66,7 @@ public class Unit : MonoBehaviour
     {
         if (HasMovedThisTurn) return false;
 
+        Vector3 previousPosition = transform.position;
         GridCell oldCell = GridManager.Instance.GetCell(GridPosition);
         if (oldCell != null)
         {
@@ -53,6 +77,11 @@ public class Unit : MonoBehaviour
         GridPosition = newGridPosition;
         transform.position = GridManager.Instance.GridToWorld(newGridPosition);
 
+        if (this is Enemy)
+        {
+            FaceDirection(transform.position - previousPosition);
+        }
+
         GridCell newCell = GridManager.Instance.GetCell(newGridPosition);
         if (newCell != null)
         {
@@ -61,7 +90,63 @@ public class Unit : MonoBehaviour
         }
 
         HasMovedThisTurn = true;
+        if (newCell != null && newCell.terrainType == TerrainType.Water)
+        {
+            Debug.Log($"{name} entrou na água: cada célula de água custa 2 pontos de movimento.");
+        }
         return true;
+    }
+
+    private void CacheVisualRoot()
+    {
+        if (visualRoot != null) return;
+
+        Transform namedVisual = transform.Find(this is Enemy ? "VisualKenney" : "VisualGato");
+        if (namedVisual != null)
+        {
+            visualRoot = namedVisual;
+            return;
+        }
+
+        Animator animator = GetComponentInChildren<Animator>(true);
+        visualRoot = animator != null ? animator.transform : transform;
+    }
+
+    private void FaceNearestEnemy()
+    {
+        if (IsDead) return;
+
+        Enemy[] enemies = FindObjectsByType<Enemy>();
+        Enemy nearest = null;
+        float nearestSqrDistance = float.PositiveInfinity;
+
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+
+            float sqrDistance = (enemy.transform.position - transform.position).sqrMagnitude;
+            if (sqrDistance < nearestSqrDistance)
+            {
+                nearestSqrDistance = sqrDistance;
+                nearest = enemy;
+            }
+        }
+
+        if (nearest != null)
+        {
+            FaceDirection(nearest.transform.position - transform.position);
+        }
+    }
+
+    private void FaceDirection(Vector3 direction)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.0001f) return;
+
+        CacheVisualRoot();
+        visualRoot.rotation =
+            Quaternion.LookRotation(direction.normalized, Vector3.up)
+            * Quaternion.Euler(0f, visualYawOffset, 0f);
     }
 
     public virtual void StartTurn()

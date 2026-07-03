@@ -1,7 +1,6 @@
-using System.Runtime.ExceptionServices;
-using Unity.VisualScripting;
 using UnityEngine;
 
+[DefaultExecutionOrder(-200)]
 public class GridManager : MonoBehaviour
 {
     public static GridManager Instance { get; private set; }
@@ -62,6 +61,15 @@ public class GridManager : MonoBehaviour
         return grid[gridPosition.x, gridPosition.y];
     }
 
+    public void SetTerrain(Vector2Int gridPosition, TerrainType terrainType)
+    {
+        GridCell cell = GetCell(gridPosition);
+        if (cell != null)
+        {
+            cell.terrainType = terrainType;
+        }
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
@@ -81,14 +89,25 @@ public class GridManager : MonoBehaviour
     }
 }
 
+public enum TerrainType
+{
+    Dirt,
+    Grass,
+    Water
+}
+
 public class GridCell
 {
     public int x;
     public int y;
     public bool isWalkable = true;
     public bool isOccupied = false;
+    public TerrainType terrainType = TerrainType.Dirt;
 
     public object occupant = null;
+
+    public int MovementCost => terrainType == TerrainType.Water ? 2 : 1;
+    public bool HidesFromZombies => terrainType == TerrainType.Grass;
 
     public GridCell(int x, int y)
     {
