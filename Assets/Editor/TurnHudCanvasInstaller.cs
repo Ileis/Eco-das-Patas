@@ -9,6 +9,7 @@ public static class TurnHudCanvasInstaller
     private static readonly string[] ScenePaths =
     {
         "Assets/Scenes/SampleScene.unity",
+        "Assets/Scenes/Fase0_Apartamento.unity",
         "Assets/Scenes/Fase1_Arredores.unity",
         "Assets/Scenes/Fase2_Bosque.unity",
         "Assets/Scenes/Fase3_Pantano.unity"

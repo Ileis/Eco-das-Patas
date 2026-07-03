@@ -244,17 +244,22 @@ public class Unit : MonoBehaviour
                 else
                 {
                     // Habilidades do gato mapeadas para as animações do fbx
-                    if (ability.name.Contains("Patada") || ability.abilityName.Contains("Patada"))
+                    string abilityId = $"{ability.name} {ability.abilityName}";
+                    bool usesJump = abilityId.Contains("Patada")
+                        || abilityId.Contains("Cuspir")
+                        || abilityId.Contains("Cuspe");
+
+                    if (usesJump)
+                    {
+                        if (anim.HasState(0, Animator.StringToHash("Jump"))) anim.Play("Jump");
+                    }
+                    else if (abilityId.Contains("Ronronar"))
                     {
                         if (anim.HasState(0, Animator.StringToHash("Eat"))) anim.Play("Eat");
                     }
-                    else if (ability.name.Contains("Miar") || ability.abilityName.Contains("Miar"))
+                    else if (abilityId.Contains("Miar"))
                     {
                         if (anim.HasState(0, Animator.StringToHash("sound"))) anim.Play("sound");
-                    }
-                    else if (ability.name.Contains("Cuspir") || ability.abilityName.Contains("Cuspir"))
-                    {
-                        if (anim.HasState(0, Animator.StringToHash("Jump"))) anim.Play("Jump");
                     }
                 }
             }

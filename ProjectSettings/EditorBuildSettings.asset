@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Fase0_Apartamento.unity
+    guid: ddbc1ff76cc1d6643977ac261beda160
+  - enabled: 1
     path: Assets/Scenes/Fase1_Arredores.unity
     guid: 274f5151936d7ae42b63079d3827b49e
   - enabled: 1
