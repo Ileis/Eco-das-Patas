@@ -162,7 +162,9 @@ public class TurnManager : MonoBehaviour
         if (_hudCanvas.transform.Find("TurnHudRoot") != null)
         {
             Transform existingRoot = _hudCanvas.transform.Find("TurnHudRoot");
-            _turnProgressFill = existingRoot.Find("TurnProgressFill")?.GetComponent<Image>();
+            _turnProgressFill = existingRoot
+                .Find("TurnProgressBackground/TurnProgressFill")
+                ?.GetComponent<Image>();
             _turnCounterText = existingRoot.Find("TurnCounterText")?.GetComponent<Text>();
             UpdateTurnHud();
             return;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class PlayerAbilityController : MonoBehaviour
@@ -23,6 +24,7 @@ public class PlayerAbilityController : MonoBehaviour
 
         EnsureMoveButton();
         CacheActionButtons();
+        BindAbilityButtons();
         HookTurnEvents();
         RefreshButtonVisibility();
     }
@@ -119,6 +121,32 @@ public class PlayerAbilityController : MonoBehaviour
         {
             actionButtons.Add(button);
         }
+    }
+
+    private void BindAbilityButtons()
+    {
+        BindButton("Patada", nameof(UsePatada), UsePatada);
+        BindButton("Miar", nameof(UseMiar), UseMiar);
+        BindButton("Cuspir", nameof(UseCuspir), UseCuspir);
+        BindButton("Ronronar", nameof(UseRonronar), UseRonronar);
+    }
+
+    private void BindButton(string label, string methodName, UnityAction action)
+    {
+        Button button = FindButtonByLabel(label);
+        if (button == null) return;
+
+        for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+        {
+            if (button.onClick.GetPersistentTarget(i) == this
+                && button.onClick.GetPersistentMethodName(i) == methodName)
+            {
+                return;
+            }
+        }
+
+        button.onClick.RemoveListener(action);
+        button.onClick.AddListener(action);
     }
 
     private void EnsureMoveButton()
