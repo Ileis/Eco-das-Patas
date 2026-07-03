@@ -9,7 +9,7 @@ public class GridManager : MonoBehaviour
     public int width = 10;
     public int height = 10;
     public float cellSize = 1f;
-    public Vector3 origin = new Vector3(-5f, 0f, -5f);
+    public Vector3 origin = new(-5f, 0f, -5f);
     private GridCell[,] grid;
 
     private void Awake()
@@ -78,15 +78,6 @@ public class GridManager : MonoBehaviour
             Vector3 to = origin + new Vector3(width * cellSize, 0.01f, y * cellSize);
             Gizmos.DrawLine(from, to);
         }
-    }
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
     }
 }
 

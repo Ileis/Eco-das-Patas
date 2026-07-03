@@ -11,17 +11,12 @@ public class GridInputHandler : MonoBehaviour
     public UnityEvent<Vector2Int> OnCellClicked;
     public UnityEvent<Vector2Int> OnCellHovered;
     
-    private Vector2Int lastHoveredCell = new Vector2Int(-1, -1);
+    private Vector2Int lastHoveredCell = new(-1, -1);
 
     private void Awake()
     {
         if (mainCamera == null) mainCamera = Camera.main;
         if (highlightObject != null) highlightObject.SetActive(false);
-    }
-
-    void Start()
-    {
-        
     }
 
     void Update()

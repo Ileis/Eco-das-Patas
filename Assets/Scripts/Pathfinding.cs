@@ -5,10 +5,10 @@ public static class Pathfinding
 {
     private static readonly Vector2Int[] Directions =
     {
-        new Vector2Int(1, 0),
-        new Vector2Int(-1, 0),
-        new Vector2Int(0, 1),
-        new Vector2Int(0, -1)
+        new(1, 0),
+        new(-1, 0),
+        new(0, 1),
+        new(0, -1)
     };
 
     public static Dictionary<Vector2Int, int> GetReachableCells(
@@ -60,7 +60,7 @@ public static class Pathfinding
         Dictionary<Vector2Int, Vector2Int> cameFrom
     )
     {
-        List<Vector2Int> path = new List<Vector2Int>();
+        List<Vector2Int> path = new();
         Vector2Int current = destination;
         
         while (current != origin)

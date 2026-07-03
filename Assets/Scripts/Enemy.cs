@@ -1,8 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Numerics;
-using NUnit.Framework;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Enemy : Unit
@@ -74,7 +71,7 @@ public class Enemy : Unit
         Unit[] allUnits = FindObjectsByType<Unit>();
         foreach (Unit unit in allUnits)
         {
-            if (!(unit is Enemy) && !unit.IsDead) return unit;
+            if (unit is not Enemy && !unit.IsDead) return unit;
         }
         return null;
     }

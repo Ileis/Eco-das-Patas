@@ -12,7 +12,7 @@ public class PlayerAbilityController : MonoBehaviour
     public Ability cuspir;
     public Ability ronronar;
 
-    private readonly List<Button> combatButtons = new List<Button>();
+    private readonly List<Button> combatButtons = new();
     private Button moveButton;
 
     private void Start()

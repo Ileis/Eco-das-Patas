@@ -11,7 +11,7 @@ public class TurnManager : MonoBehaviour
 
     public event Action<Unit> TurnStarted;
 
-    private List<Unit> _turnOrder = new List<Unit>();
+    private List<Unit> _turnOrder = new();
     private int _currentIndex = -1;
     private int _turnCount = 0;
 
@@ -22,8 +22,8 @@ public class TurnManager : MonoBehaviour
     private Font _uiFontTemplate;
     private Sprite _uiSpriteTemplate;
 
-    private readonly Vector2 _hudAnchorOffset = new Vector2(-26f, -28f);
-    private readonly Vector2 _hudSize = new Vector2(190f, 42f);
+    private readonly Vector2 _hudAnchorOffset = new(-26f, -28f);
+    private readonly Vector2 _hudSize = new(190f, 42f);
 
     public Unit CurrentUnit =>
         (_currentIndex >= 0 && _currentIndex < _turnOrder.Count) ? _turnOrder[_currentIndex] : null;

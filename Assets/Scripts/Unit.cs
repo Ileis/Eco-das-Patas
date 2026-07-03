@@ -17,7 +17,7 @@ public class Unit : MonoBehaviour
     public bool IsDead { get; private set; }
     public bool HasMovedThisTurn { get; private set; }
 
-    private Dictionary<Ability, int> usesThisTurn = new Dictionary<Ability, int>();
+    private readonly Dictionary<Ability, int> usesThisTurn = new();
 
     protected virtual void Start()
     {
