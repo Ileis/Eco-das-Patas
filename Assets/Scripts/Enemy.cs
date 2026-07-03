@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Enemy : Unit
 {
-    public Ability meleeAbility;
+    public Ability Ability;
 
     public void TakeAITurn()
     {
@@ -24,25 +24,26 @@ public class Enemy : Unit
             yield break;
         }
 
-        if (player != null && meleeAbility != null)
+        if (player != null && Ability != null)
         {
             int distance = ManhattanDistance(GridPosition, player.GridPosition);
 
-            if (distance <= meleeAbility.range && CanUseAbility(meleeAbility))
+            // if (distance <= Ability.range && CanUseAbility(Ability))
+            // {
+            //     TryUseAbility(Ability, player);
+            //     yield return new WaitForSeconds(0.4f);
+            // }
+            // else
+            if (!HasMovedThisTurn)
             {
-                TryUseAbility(meleeAbility, player);
-                yield return new WaitForSeconds(0.4f);
-            }
-            else if (!HasMovedThisTurn)
-            {
-                MoveTowards(player.GridPosition);
+                Move(player.GridPosition);
                 yield return new WaitUntil(() => !IsMoving);
                 yield return new WaitForSeconds(0.2f); // Pequeno atraso após chegar antes de tentar atacar
 
                 distance = ManhattanDistance(GridPosition, player.GridPosition);
-                if (distance <= meleeAbility.range && CanUseAbility(meleeAbility))
+                if (distance <= Ability.range && CanUseAbility(Ability))
                 {
-                    TryUseAbility(meleeAbility, player);
+                    TryUseAbility(Ability, player);
                     yield return new WaitForSeconds(0.4f);
                 }
             }
@@ -51,7 +52,7 @@ public class Enemy : Unit
         if (TurnManager.Instance != null) TurnManager.Instance.NextTurn();
     }
 
-    private void MoveTowards(Vector2Int targetGridPosition)
+    protected virtual void Move(Vector2Int targetGridPosition)
     {
         Dictionary<Vector2Int, int> reachable = Pathfinding.GetReachableCells(GridPosition, moveRange, out _);
 
@@ -84,7 +85,7 @@ public class Enemy : Unit
         return null;
     }
 
-    private int ManhattanDistance(Vector2Int a, Vector2Int b)
+    protected int ManhattanDistance(Vector2Int a, Vector2Int b)
     {
         return Mathf.Abs(a.x -b.x) + Mathf.Abs(a.y - b.y);
     }
