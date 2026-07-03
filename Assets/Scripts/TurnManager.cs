@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class TurnManager : MonoBehaviour
 {
+    public GameObject TurnIndicator;
     public static TurnManager Instance { get; private set; }
 
     public event Action<Unit> TurnStarted;
@@ -262,32 +263,9 @@ public class TurnManager : MonoBehaviour
 
         if (unit == null) return;
 
-        _activeTurnIndicator = CreateTurnIndicator();
-        _activeTurnIndicator.transform.SetParent(unit.transform, false);
-        _activeTurnIndicator.transform.localPosition = _indicatorLocalOffset;
-        _activeTurnIndicator.transform.localRotation = Quaternion.identity;
-    }
+        Vector3 worldPos = GridManager.Instance.GridToWorld(unit.GridPosition) + Vector3.up * 7.5f;
+        _activeTurnIndicator = Instantiate(TurnIndicator, worldPos, Quaternion.identity, unit.transform);
+        if (_activeTurnIndicator == null) return;
 
-    private GameObject CreateTurnIndicator()
-    {
-        GameObject indicator = new("ActiveTurnIndicator");
-        TextMesh textMesh = indicator.AddComponent<TextMesh>();
-        textMesh.text = "▼";
-        textMesh.font = _uiFontTemplate != null
-            ? _uiFontTemplate
-            : Resources.GetBuiltinResource<Font>("Arial.ttf");
-        textMesh.fontSize = 80;
-        textMesh.characterSize = 1.2f;
-        textMesh.anchor = TextAnchor.MiddleCenter;
-        textMesh.alignment = TextAlignment.Center;
-        textMesh.color = new Color(0.92f, 0.15f, 0.15f, 1f);
-
-        MeshRenderer renderer = indicator.GetComponent<MeshRenderer>();
-        if (renderer != null && textMesh.font != null)
-        {
-            renderer.material = textMesh.font.material;
-        }
-
-        return indicator;
     }
 }

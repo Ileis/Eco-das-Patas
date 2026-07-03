@@ -3096,6 +3096,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5d2d1b84146ec18b97f3d6e3c7c7865, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnManager
+  TurnIndicator: {fileID: 1767263776103305873, guid: d35cc177eba602e7cbd947523f0d3609, type: 3}
 --- !u!4 &1922954150
 Transform:
   m_ObjectHideFlags: 0

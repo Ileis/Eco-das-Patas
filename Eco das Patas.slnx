@@ -1,6 +1,7 @@
 ﻿<Solution>
   <Project Path="Unity.Timeline.csproj" />
   <Project Path="Unity.PlasticSCM.Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.Mathematics.csproj" />
   <Project Path="Unity.Timeline.Editor.csproj" />
   <Project Path="Unity.VisualScripting.Core.Editor.csproj" />
@@ -20,13 +21,12 @@
   <Project Path="Unity.Rider.Editor.csproj" />
   <Project Path="Unity.VisualScripting.State.csproj" />
   <Project Path="Unity.AI.Navigation.Updater.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.AI.Navigation.Editor.csproj" />
   <Project Path="Unity.InputSystem.ForUI.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Unity.AI.Navigation.csproj" />
   <Project Path="Unity.Mathematics.Editor.csproj" />
   <Project Path="Unity.VisualScripting.SettingsProvider.Editor.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Unity.InputSystem.TestFramework.csproj" />
   <Project Path="Unity.VisualScripting.Shared.Editor.csproj" />
   <Project Path="Unity.CollabProxy.Editor.csproj" />
