@@ -21,6 +21,7 @@ public class EnemyCaiting : Enemy
                     bestCells.Add(cell);
                 }
             }
+            if (bestCells.Count <= 0) return;
             Vector2Int selectedCell = bestCells[Random.Range(0, bestCells.Count - 1)];
             Debug.Log($"Distancia: {ManhattanDistance(selectedCell, targetGridPosition)}");
 

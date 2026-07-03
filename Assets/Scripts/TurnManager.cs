@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Data.Common;
 
 public class TurnManager : MonoBehaviour
 {
@@ -94,6 +95,9 @@ public class TurnManager : MonoBehaviour
 
     public void NextTurn()
     {
+        if (GameObject.FindWithTag("Player") == null) return;
+        if (GameObject.FindWithTag("Player").GetComponent<Unit>().IsDead) return;
+
         if (_turnOrder.Count == 0) return;
 
         _currentIndex++;
