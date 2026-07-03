@@ -155,7 +155,7 @@ public class UnitSelectionManager : MonoBehaviour
 
         selectedUnit = unit;
         selectedAbility = null;
-        currentMode = SelectionMode.Move;
+        currentMode = SelectionMode.None;
         RefreshHighlights();
         return true;
     }

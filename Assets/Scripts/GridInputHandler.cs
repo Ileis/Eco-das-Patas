@@ -58,7 +58,7 @@ public class GridInputHandler : MonoBehaviour
                 if (highlightObject != null)
                 {
                     highlightObject.SetActive(true);
-                    highlightObject.transform.position = GridManager.Instance.GridToWorld(gridPos) + UnityEngine.Vector3.up * 0.01f;
+                    highlightObject.transform.position = GridManager.Instance.GridToWorld(gridPos) + UnityEngine.Vector3.up * 0.03f;
                 }
 
                 OnCellHovered?.Invoke(gridPos);
